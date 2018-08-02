@@ -101,6 +101,9 @@ function nginfo = sbxInfo(path, force)
         if info.scanmode == 0
             info.framerate = 30.98;
         end
+        
+        info.height = info.sz(2);
+        info.width = info.recordsPerBuffer;
     end
     
     nginfo = info;
