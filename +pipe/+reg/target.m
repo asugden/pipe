@@ -1,4 +1,4 @@
-function frame = target(path, pmt, otlevel, bin, offset_beginning, refsize, edges, equaledges)
+function frame = target(path, pmt, otlevel, bin, offset_beginning, refsize, edges, rounds, equaledges)
 %SBXALIGNTARGETCORE Aligns an sbx target file given by path. Assumes that
 %	the used pmt is 0 or green
 
@@ -15,7 +15,7 @@ function frame = target(path, pmt, otlevel, bin, offset_beginning, refsize, edge
     c = class(ref);
     
     % Equalize edges for easy of return affine transform to correct size
-    if nargin > 7 && equaledges
+    if nargin > 8 && equaledges
         edges(1:2) = edges(1:2)/size(ref, 2);
         edges(3:4) = edges(3:4)/size(ref, 1);
         maxedges = max(edges);
@@ -32,11 +32,11 @@ function frame = target(path, pmt, otlevel, bin, offset_beginning, refsize, edge
     fref = squeeze(mean(ref, 3));
     
     % Align reference files
-    for repeats = 1:3 % 3 repetitions to register targets well
+    for repeats = 1:rounds % 3 repetitions to register targets well
         target_fft = fft2(double(fref));
         for i = 1:size(ref, 3)
             data_fft = fft2(double(ref(:, :, i)));
-            [~, reg] = pipe.reg.dft(target_fft, data_fft, upsample);
+            [~, reg] = pipe.reg.dftcore(target_fft, data_fft, upsample);
             ref(:, :, i) = abs(ifft2(reg));
         end
         fref = squeeze(mean(ref, 3));

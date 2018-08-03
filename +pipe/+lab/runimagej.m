@@ -39,15 +39,21 @@ function runimagej()
         % Switch off warning
         warning_state = warning('off');
 
-        add_to_classpath(classpath, fullfile(fiji_directory, 'jars'));
-        add_to_classpath(classpath, fullfile(fiji_directory, 'plugins'));
+        ijroot = 'D:\twophoton_data\2photon\scan\pipeline\minimal_ImageJ';
+        javaaddpath(fullfile(ijroot,'ij.jar'));
+        add_to_classpath(classpath, fullfile(ijroot, 'plugins'));
+        
+        % add_to_classpath(classpath, fullfile(fiji_directory, 'jars'));
+        % add_to_classpath(classpath, fullfile(fiji_directory, 'plugins'));
 
         % Switch warning back to initial settings
         warning(warning_state)
 
         % Set the Fiji directory (and plugins.dir which is not Fiji.app/plugins/)
-        javaMethod('setProperty', 'java.lang.System', 'ij.dir', fiji_directory);
-        javaMethod('setProperty', 'java.lang.System', 'plugins.dir', fiji_directory);
+        javaMethod('setProperty', 'java.lang.System', 'plugins.dir', ijroot);
+        
+        % javaMethod('setProperty', 'java.lang.System', 'ij.dir', fiji_directory);
+        % javaMethod('setProperty', 'java.lang.System', 'plugins.dir', fiji_directory);
 
         %% Don't open the ImageJ window
         

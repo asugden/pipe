@@ -1,5 +1,5 @@
-function out = align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
-% SBXALIGNAFFINEDFT First applies an affine alignment, and then follows it
+function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
+% PIPE.REG.ALIGN First applies an affine alignment, and then follows it
 %   with a DFT registration if the affine alignment is averaged over frames
     % sbxpaths should be a cell array of paths to .sbx files
 
@@ -12,11 +12,19 @@ function out = align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
     addOptional(p, 'target', 1, @isnumeric);  % Which value to use as the target for cross-run alignment (index of runs)
     addOptional(p, 'refsize', 500, @isnumeric);  % The number of frames to average for the reference image
     addOptional(p, 'refoffset', 500, @isnumeric);  % How many frames from the onset should the reference be made
+    addOptional(p, 'target_rounds', 3, @isnumeric);  % Number of DFT rounds to align target movie
+    
+    % Affine only
     addOptional(p, 'tbin', 1, @isnumeric);  % Number of seconds to average in time for the affine alignment. Set to 0 for affine every frame
+    addOptional(p, 'binxy', 2, @isnumeric);  % The number of pixels to downsample in space
     addOptional(p, 'highpass_sigma', 5, @isnumeric);  % Size of Gaussian blur to be subtracted from a downsampled version of your image, only if affine
+    addOptional(p, 'pre_register', false, @isboolean);  % If affine, pre-register with DFT if true
+    addOptional(p, 'interpolation_type', 'spline');  % Used to be 'linear', changed to 'spline'
+    
+    % Extra options
     addOptional(p, 'save_title', '');  % Text to append to a file extension (for multiple alignments)
     addOptional(p, 'chunksize', 1000, @isnumeric);  % The size of a chunk for automation. Recommended to not change
-    addOptional(p, 'binxytarget', 2, @isnumeric);  % The number of pixels to downsample in space
+    addOptional(p, 'verbose', false);  % Print out which stages are being processed on if true
     if length(varargin) == 1 && iscell(varargin{1}), varargin = varargin{1}; end
     parse(p, varargin{:});
     p = p.Results;
@@ -67,112 +75,233 @@ function out = align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
     end
     impaths = newpaths;
     
-    %% Save all target files, the last will be the main target
+    %% Create all run target files and align across runs
     
-    xruntargetref = pipe.reg.target(targetpath, p.pmt, p.optotune_level, ...
-            p.binxytarget, p.refoffset, p.refsize, p.edges);
-        
-    targetrefs = cell(1, length(impaths));
-    for r = 1:length(impaths)
-        targetrefs{r} = pipe.reg.target(impaths{r}, p.pmt, p.optotune_level, ...
-            p.binxytarget, p.refoffset, p.refsize, p.edges);
+    % The dftref is not downsampled in space (and dft is not downsampled in
+    % time)
+    dftref = pipe.reg.target(targetpath, p.pmt, p.optotune_level, 1, ...
+        p.refoffset, p.refsize, p.edges, p.target_rounds);
+    
+    if strcmp(p.aligntype, 'affine')
+        % The cross-run target
+        xruntargetref = pipe.reg.target(targetpath, p.pmt, p.optotune_level, ...
+                p.binxy, p.refoffset, p.refsize, p.edges, p.target_rounds);
+
+        % Targets for every individual run
+        targetrefs = cell(1, length(impaths));
+        xruntargetmatch = -1;
+        for r = 1:length(impaths)
+            if strcmp(impaths{r}, targetpath)
+                targetrefs{r} = xruntargetref;
+                xruntargetmatch = r;
+            else
+                targetrefs{r} = pipe.reg.target(impaths{r}, p.pmt, p.optotune_level, ...
+                    p.binxy, p.refoffset, p.refsize, p.edges, p.target_rounds);
+            end
+        end
+
+        % Get the cross-run transforms to apply later with no correction
+        % required for the target movie
+        xruntform = pipe.reg.turboreg(xruntargetref, 'xrun', true, ...
+            'targetrefs', targetrefs, 'pmt', p.pmt, 'optotune_level', p.optotune_level, ...
+            'binxy', p.binxy, 'sigma', p.highpass_sigma, ...
+            'pre_register', p.pre_register);
+        if xruntargetmatch > 0, xruntform{xruntargetmatch} = affine2d; end
     end
-
-    bigref = pipe.reg.target(targetpath, p.pmt, p.optotune_level, 1, ...
-        p.refoffset, p.refsize, p.edges);
-
-    % Get the cross-run transforms to apply later
-    xruntform = pipe.reg.turboreg(xruntargetref, 'xrun', true, ...
-        'targetrefs', targetrefs, 'binxy', p.binxytarget, 'sigma', p.highpass_sigma, ...
-        'aligntype', p.aligntype);
 
     %% Iterate over all runs
     for r = 1:length(impaths)
         % Get the path and info file
         path = impaths{r};
-        info = sbxInfo(path);
-        nframes = info.max_idx + 1;
+        alignfile = [path(1:strfind(path,'.')-1) alext];
+        info = pipe.metadata(path);
+        nframes = info.nframes;
+        if info.optotune_used && ~isempty(p.optotune_level)
+            nframes = floor(nframes/length(info.otwave));
+        end 
+        binframes = max(1, round(info.framerate*p.tbin));
+        
+        if strcmp(p.aligntype, 'affine')
+            %% Affine alignment within a run
+            
+            % Affine align using turboreg in ImageJ
+            runchunksize = floor(p.chunksize/binframes)*binframes*binframes;
+            nchunks = ceil(nframes/runchunksize);
+            ootform = cell(1, nchunks);
+            for c = 1:nchunks
+                if p.verbose, fprintf('%Aligning %02i/%02i', c, nchunks); end
+                ootform{c} = pipe.reg.turboreg(targetrefs{r}, 'startframe', (c-1)*runchunksize+1, ...
+                    'nframes', runchunksize, 'mov_path', path, 'binframes', ...
+                    binframes, 'pmt', p.pmt, 'edges', p.edges, ...
+                    'optotune_level', p.optotune_level, ...
+                    'sigma', p.highpass_sigma, 'pre_register', p.pre_register);
+            end
 
-        % Sort out how many frames to bin based on framerate
-        if info.scanmode == 1
-            % IF YOU ARE RESETTING THIS TO 1, STOP NOW!!!
-            % Set the input parameter tbin to 0.
-            % Please do not change variables in sbxAlignAffineDFT. Contact
-            % Arthur first.
-            binframes = max(1, round(15.49*p.tbin));
-        else
-            binframes = max(1, round(30.98*p.tbin));
-        end
+            % Get the cross-run affine transform
+            tform = cell(1, nframes);
+            xtform = xruntform{r};
 
-        % Affine align using turboreg in ImageJ
-        runchunksize = floor(p.chunksize/binframes)*binframes*binframes;
-        nchunks = ceil(nframes/runchunksize);
-        ootform = cell(1, nchunks);
-        for c = 1:nchunks
-            if nchunks > 20, disp(sprintf('%Aligning %02i/%02i', c, nchunks)); end
-            % ootform{c} = sbxAlignTurboRegCore(path, (c-1)*runchunksize+1,...
-            %     runchunksize, targetpaths{r}, binframes, p.pmt, targetrefs{r}, p.edges, p.highpass_sigma);
-            ootform{c} = sbxAlignTurboReg(targetpaths{r}, 'startframe', (c-1)*runchunksize+1, ...
-                'nframes', runchunksize, 'mov_path', path, 'binframes', binframes, 'pmt', p.pmt, ...
-                'edges', p.edges, 'sigma', p.highpass_sigma, 'aligntype', p.aligntype);
-        end
-
-        % Get the cross-run affine transform
-        tform = cell(1, nframes);
-        xtform = xruntform{r};
-
-        % Put everything back in order and keep track of which indices
-        % have values
-        known = zeros(1, nframes);
-        for c = 1:nchunks
-            for f = 1:length(ootform{c})
-                pos = (c - 1)*runchunksize + f;
-                if pos <= nframes
-                    tform{pos} = ootform{c}{f};
-                    if ~isempty(tform{pos})
-                        temp.T = xtform.T*tform{pos}.T;
-                        temp.T(3, 1) = xtform.T(3, 1) + tform{pos}.T(3, 1);
-                        temp.T(3, 2) = xtform.T(3, 2) + tform{pos}.T(3, 2);
-                        tform{pos}.T = temp.T;
-                        % tform{pos}.T = xtform.T*tform{pos}.T;
-                        known(pos) = 1; 
+            % Put everything back in order and keep track of which indices
+            % have values
+            known = zeros(1, nframes);
+            for c = 1:nchunks
+                for f = 1:length(ootform{c})
+                    pos = round((c - 0.5)*runchunksize) + f;
+                    if pos <= nframes
+                        tform{pos} = ootform{c}{f};
+                        if ~isempty(tform{pos})
+                            temp.T = xtform.T*tform{pos}.T;
+                            temp.T(3, 1) = xtform.T(3, 1) + tform{pos}.T(3, 1);
+                            temp.T(3, 2) = xtform.T(3, 2) + tform{pos}.T(3, 2);
+                            tform{pos}.T = temp.T;
+                            known(pos) = 1; 
+                        end
                     end
                 end
             end
-        end
-        indices = 1:nframes;
-        indices(known < 1) = 0;
-        known = indices(indices > 0);
+            indices = 1:nframes;
+            indices(known < 1) = 0;
+            known = indices(indices > 0);
 
-        % Now fix interpolated registration with dft registration
-        trans = zeros(nframes, 4);
-        if binframes > 1
-            % Interpolate any missing frames
-            tform = interpolateTransform(tform, known);
+            % Now fix interpolated registration with dft registration
+            trans = zeros(nframes, 4);
+            if binframes > 1
+                % Interpolate any missing frames
+                tform = interpolateTransform(tform, known, p.interpolation_type);
 
-            % Affine align using turboreg in ImageJ
+                % Affine align using turboreg in ImageJ
+                nchunks = ceil(nframes/p.chunksize);
+                ootform = cell(1, nchunks);
+                ootrans = cell(1, nchunks);
+                for c = 1:nchunks
+                    ootform{c} = tform((c-1)*p.chunksize+1:min(nframes, c*p.chunksize)); 
+                end
+
+                % Get the current parallel pool or initailize
+                pipe.parallel();
+                parfor c = 1:nchunks
+                    ootrans{c} = pipe.reg.postdft(path, (c-1)*p.chunksize+1, ...
+                        p.chunksize, dftref, ootform{c}, p.pmt, ...
+                        p.optotune_level, p.edges);
+                end
+
+                for c = 1:nchunks
+                    pos = (c - 1)*p.chunksize + 1;
+                    upos = min(c*p.chunksize, nframes);
+                    trans(pos:upos, :) = ootrans{c};
+                end
+            end
+            
+            % And save, accounting for optotune levels
+            if isempty(p.optotune_level) || ~info.optotune_used
+                save(alignfile, 'tform', 'trans', 'binframes');
+            else
+                ltform = tform;
+                ltrans = trans;
+                if exist(alignfile, 'file')
+                    aligndata = load(alignfile, '-mat');
+                    trans = aligndata.trans;
+                    tform = aligndata.tform;
+                else
+                    trans = zeros(info.nframes, 4);
+                    trans(:, :) = nan;
+                    tform = cell(info.nframes);
+                end
+                
+                trans(p.optotune_level:length(info.otwave):info.nframes) = ltrans;
+                tform(p.optotune_level:length(info.otwave):info.nframes) = ltform;
+                save(alignfile, 'tform', 'trans', 'binframes');
+            end
+        else
+            % DFT Alignment within a run
+            
+            trans = zeros(nframes, 4);
             nchunks = ceil(nframes/p.chunksize);
-            ootform = cell(1, nchunks);
             ootrans = cell(1, nchunks);
-            for c = 1:nchunks, ootform{c} = tform((c-1)*p.chunksize+1:min(nframes, c*p.chunksize)); end
-
-            % Get the current parallel pool or initailize
-            openParallel();
-
+            
+            % Get the current parallel pool and register
+            pipe.parallel();
             parfor c = 1:nchunks
-                ootrans{c} = sbxAlignAffinePlusDFT(path, (c-1)*p.chunksize+1, p.chunksize, bigref, ootform{c}, p.pmt, p.edges);
+                ootrans{c} = pipe.reg.dft(dftref, 'startframe', (c-1)*runchunksize+1, ...
+                'nframes', runchunksize, 'mov_path', path, 'pmt', p.pmt, ...
+                'edges', p.edges, 'optotune_level', p.optotune_level);
             end
 
+            % Recombine to a vector
             for c = 1:nchunks
                 pos = (c - 1)*p.chunksize + 1;
                 upos = min(c*p.chunksize, nframes);
                 trans(pos:upos, :) = ootrans{c};
             end
+            
+            % And save, accounting for optotune levels
+            if isempty(p.optotune_level) || ~info.optotune_used
+                save(alignfile, 'trans');
+            else
+                if exist(alignfile, 'file')
+                    aligndata = load(alignfile, '-mat');
+                    fulltrans = aligndata.trans;
+                else
+                    fulltrans = zeros(info.nframes, 4);
+                    fulltrans(:, :) = nan;
+                end
+                
+                fulltrans(p.optotune_level:length(info.otwave):info.nframes) = trans;
+                trans = fulltrans;
+                save(alignfile, 'trans');
+            end
         end
-
-        afalign = [path(1:strfind(path,'.')-1) '.alignaffine' p.save_title];
-        save(afalign, 'tform', 'trans', 'binframes');
     end
-    out = 1;
 end
 
+function tform = interpolateTransform(tform, known, itype)
+% INTERPOLATETRANSFORM interpolates a transformation from known values
+
+    if nargin < 3, itype = 'spline'; end  % can also be 'linear'
+    if nargin < 4, cutextremes = false;
+
+    % Throw out extremes if not linearly fitting
+    if ~strcmp(itype, 'linear')
+        % Extract values to throw out extremes
+        vals = zeros(6, length(known));
+        vals(:, :) = nan;
+        for t = 1:length(known)
+            if known(t) > -1 && isempty(tform{known(t)})
+                known(t) = -1;
+            elseif known(t) > -1
+                for i = 1:3
+                    for j = 1:2
+                        vals((i-1)*3 + j, t) = tform{known(t)}.T(i, j);
+                    end
+                end
+            end
+        end
+
+        % Throw out extremes
+        mn = nanmean(vals, 2);
+        stdev = nanstd(vals, [], 2);
+        known(sum(vals > mn + 5*stdev, 1) > 0) = -1;
+        known(sum(vals < mn - 5*stdev, 1) > 0) = -1;
+    end
+    
+    if length(known) ~= length(tform), error('Known time length is wrong'); end
+    
+    % Fill in the end with the same values
+    unknownpos = 1:length(known);
+    knownpos = unknownpos(known > 0);
+    unknownpos = unknownpos(known < 1);
+    for i = knownpos(end):length(tform), tform{i} = tform{knownpos(end)}; end
+    for i = 1:knownpos(1)-1, tform{i} = tform{knownpos(1)}; end
+    unknownpos = unknownpos(unknownpos > knownpos(1));
+    unknownpos = unknownpos(unknownpos < knownpos(end));
+    
+    % And interpolate
+    for m = 1:3
+        for n = 1:2
+            vec = zeros(length(knownpos));
+            for k = 1:length(knownpos), vec(k) = tform{knownpos(k)}.T(m, n); end
+            unknownvec = interp1(knownpos, vec, unknownpos, itype);
+            for k = 1:length(unknownpos), tform{unknownpos(k)}.T(m, n) = unknownvec(k); end
+        end
+    end
+end
