@@ -258,7 +258,6 @@ function tform = interpolateTransform(tform, known, itype)
 % INTERPOLATETRANSFORM interpolates a transformation from known values
 
     if nargin < 3, itype = 'spline'; end  % can also be 'linear'
-    if nargin < 4, cutextremes = false;
 
     % Throw out extremes if not linearly fitting
     if ~strcmp(itype, 'linear')
