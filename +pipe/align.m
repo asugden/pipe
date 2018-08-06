@@ -8,7 +8,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
     addOptional(p, 'force', false);  % Allow overwriting if true
     addOptional(p, 'optotune_level', []);  % Align only a single optotune level if optotune is used
     addOptional(p, 'edges', []);  % Will be set from pipe.lab.badedges if empty
-    addOptional(p, 'pmt', 1, @isnumeric);  % REMEMBER, PMT is 0-indexed
+    addOptional(p, 'pmt', 1, @isnumeric);  % REMEMBER, PMT is 1-indexed
     addOptional(p, 'target', 1, @isnumeric);  % Which value to use as the target for cross-run alignment (index of runs)
     addOptional(p, 'refsize', 500, @isnumeric);  % The number of frames to average for the reference image
     addOptional(p, 'refoffset', 500, @isnumeric);  % How many frames from the onset should the reference be made
@@ -125,7 +125,8 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
             %% Affine alignment within a run
             
             % Affine align using turboreg in ImageJ
-            runchunksize = floor(p.chunksize/binframes)*binframes*binframes;
+            runchunksize = min(ceil(info.nframes/8), p.chunksize);
+            runchunksize = floor(runchunksize/binframes)*binframes;
             nchunks = ceil(nframes/runchunksize);
             ootform = cell(1, nchunks);
             for c = 1:nchunks
@@ -146,7 +147,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
             known = zeros(1, nframes);
             for c = 1:nchunks
                 for f = 1:length(ootform{c})
-                    pos = round((c - 0.5)*runchunksize) + f;
+                    pos = (c - 1)*runchunksize + f*binframes + round(binframes/2);
                     if pos <= nframes
                         tform{pos} = ootform{c}{f};
                         if ~isempty(tform{pos})
@@ -159,9 +160,6 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
                     end
                 end
             end
-            indices = 1:nframes;
-            indices(known < 1) = 0;
-            known = indices(indices > 0);
 
             % Now fix interpolated registration with dft registration
             trans = zeros(nframes, 4);
@@ -180,7 +178,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
                 % Get the current parallel pool or initailize
                 pipe.parallel();
                 parfor c = 1:nchunks
-                    ootrans{c} = pipe.reg.postdft(path, (c-1)*p.chunksize+1, ...
+                    ootrans{c} = pipe.reg.postdft(path, (c-1)*p.chunksize, ...
                         p.chunksize, dftref, ootform{c}, p.pmt, ...
                         p.optotune_level, p.edges);
                 end
@@ -188,7 +186,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
                 for c = 1:nchunks
                     pos = (c - 1)*p.chunksize + 1;
                     upos = min(c*p.chunksize, nframes);
-                    trans(pos:upos, :) = ootrans{c};
+                    trans(pos:upos, :) = ootrans{1, c};
                 end
             end
             
@@ -265,22 +263,27 @@ function tform = interpolateTransform(tform, known, itype)
         vals = zeros(6, length(known));
         vals(:, :) = nan;
         for t = 1:length(known)
-            if known(t) > -1 && isempty(tform{known(t)})
+            if known(t) > -1 && isempty(tform{t})
                 known(t) = -1;
             elseif known(t) > -1
                 for i = 1:3
                     for j = 1:2
-                        vals((i-1)*3 + j, t) = tform{known(t)}.T(i, j);
+                        vals((i-1)*3 + j, t) = tform{t}.T(i, j);
                     end
                 end
             end
         end
 
-        % Throw out extremes
-        mn = nanmean(vals, 2);
-        stdev = nanstd(vals, [], 2);
-        known(sum(vals > mn + 5*stdev, 1) > 0) = -1;
-        known(sum(vals < mn - 5*stdev, 1) > 0) = -1;
+        % Throw out extremes, first of scale and skew, then of translation
+        vals = vals(:, known > 0);
+        mn = nanmean(vals([1 2 4 5], :), 2);
+        stdev = nanstd(vals([1 2 4 5], :), [], 2);
+        known(sum(vals([1 2 4 5], :) > mn + 5*stdev, 1) > 0) = -1;
+        known(sum(vals([1 2 4 5], :) < mn - 5*stdev, 1) > 0) = -1;
+        
+        mn = nanmean(abs(vals([7 8], :)), 2);
+        stdev = nanstd(abs(vals([7 8], :)), [], 2);
+        known(sum(abs(vals([7 8], :)) > mn + 5*stdev, 1) > 0) = -1;
     end
     
     if length(known) ~= length(tform), error('Known time length is wrong'); end
@@ -295,9 +298,10 @@ function tform = interpolateTransform(tform, known, itype)
     unknownpos = unknownpos(unknownpos < knownpos(end));
     
     % And interpolate
+    for k = 1:length(unknownpos), tform{unknownpos(k)} = affine2d; end
     for m = 1:3
         for n = 1:2
-            vec = zeros(length(knownpos));
+            vec = zeros(1, length(knownpos));
             for k = 1:length(knownpos), vec(k) = tform{knownpos(k)}.T(m, n); end
             unknownvec = interp1(knownpos, vec, unknownpos, itype);
             for k = 1:length(unknownpos), tform{unknownpos(k)}.T(m, n) = unknownvec(k); end

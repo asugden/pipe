@@ -29,7 +29,7 @@ function dft_transforms = dft(target_mov, varargin)
         end
     else
         % Within run
-        data = pipe.imread(p.mov_path, p.startframe - 1, p.nframes, p.pmt, ...
+        data = pipe.imread(p.mov_path, p.startframe, p.nframes, p.pmt, ...
             p.optotune_level);
             
         % Get the standard edge removal and bin by 2

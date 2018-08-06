@@ -1,4 +1,4 @@
-function mov = imread(path, k, N, pmt, optolevel, mtype)
+function mov = imread(path, k, N, pmt, optolevel, varargin)
 % READ: read movie files. As of now can handle SBX. Will add TIF.
 
     % BEWARE: Corrected from 0-indexed to 1-indexed, both for k and pmt
@@ -6,9 +6,9 @@ function mov = imread(path, k, N, pmt, optolevel, mtype)
     % path  - the file path to .sbx file (e.g., 'xx0_000_001')
     % k     - the index of the first frame to be read.  The first index is 1.
     % N     - the number of consecutive frames to read starting with k.,
-    % optional
+    %   optional
     % pmt   - the number of the pmt, 1 for green or 2 for red, assumed to
-    % be 1. If set to -1 and two PMTs exist, it will return both PMTs
+    %   be 1. If set to -1 and two PMTs exist, it will return both PMTs
     % optolevel - return a single optolevel instead of all. If passed an empty
     % array, it will return all z levels of optotune
     % mptype - force the movie type
@@ -24,11 +24,48 @@ function mov = imread(path, k, N, pmt, optolevel, mtype)
     if nargin < 4, pmt = 1; end
     % Read a larger chunk if optotune was used
     if nargin < 5, optolevel = []; end
-    if nargin < 6, mtype = []; end
+    
+    p = inputParser;
+    addOptional(p, 'mtype', []);  % Movie type- estimated from extension unless entered here
+    addOptional(p, 'register', false);  % Register upon reading if true
+    addOptional(p, 'registration_path', []);  % Estimated unless explicitly entered
+    if length(varargin) == 1 && iscell(varargin{1}), varargin = varargin{1}; end
+    parse(p, varargin{:});
+    p = p.Results;
+    
+    %% Deal with registration
     
     % Find file type
     [~, ~, ext] = fileparts(path);
-    if strcmpi(mtype, 'sbx') || strcmpi(ext, '.sbx')
+    if p.register && (~strcmpi(ext, '.sbxreg') || ~isempty(p.registration_path))
+        if isempty(p.registration_path)
+            [base, name, ~] = fileparts(path);
+            % Catch existing sbxreg files
+            if exist(fullfile(base, [name '.sbxreg']), 'file')
+                mov = pipe.imread(fullfile(base, [name '.sbxreg']), k, N, pmt, optolevel);
+                return;
+            end
+            
+            % Look for affine alignment, then dft alignment for realtime
+            if exist(fullfile(base, [name '.alignaffine']), 'file')
+                p.registration_path = fullfile(base, [name '.alignaffine']);
+            elseif exist(fullfile(base, [name '.alignxy']), 'file')
+                p.registration_path = fullfile(base, [name '.alignxy']);
+            end
+        end
+        % Catch missing registration files
+        if isempty(p.registration_path) || ~exist(p.registration_path, 'file')
+            error('Registration file not found.'); 
+        end
+        
+        % Return aligned file
+        mov = pipe.reg.aligned(path, p.registration_path, k, N, pmt, optolevel);
+        return;
+    end
+    
+    %% Read file
+    
+    if strcmpi(p.mtype, 'sbx') || (length(ext) > 3 && strcmpi(ext(1:4), '.sbx'))
         mov = pipe.io.sbxRead(path, k, N, pmt, optolevel);
     else
         error('Cannot read movie type.');

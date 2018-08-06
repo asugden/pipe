@@ -36,11 +36,11 @@ function affine_transforms = turboreg(target_mov, varargin)
         [x, y] = size(p.targetrefs{1});
         data = zeros(x, y, length(p.targetrefs));
         for tr = 1:length(p.targetrefs)
-            data(:, :, tr) = p.targetrefs;
+            data(:, :, tr) = p.targetrefs{tr};
         end
     else
         % Within run
-        data = pipe.imread(p.mov_path, p.startframe - 1, p.nframes, p.pmt, ...
+        data = pipe.imread(p.mov_path, p.startframe, p.nframes, p.pmt, ...
             p.optotune_level);
             
         % Get the standard edge removal and bin by 2
@@ -83,7 +83,7 @@ function affine_transforms = turboreg(target_mov, varargin)
     targetstr = sprintf('%i ', targets);
     
     % Create the text for the ImageJ macro
-    alignstr = sprintf('"-align -window data %s -window ref %s -affine %s -hideOutput"', ...
+    alignstr = sprintf('-align -window data %s -window ref %s -affine %s -hideOutput', ...
         szstr, szstr, targetstr);
     
     % Run turboreg
@@ -92,14 +92,12 @@ function affine_transforms = turboreg(target_mov, varargin)
     src = pipe.io.arrtoij(data);
     trhl.runHL(ref, src, alignstr);
     tform = trhl.getAllSourcePoints();
-    
-    % Convert to a transformation
-    targetgeotransform = targets([3 4 7 8 11 12]);
-    targetgeotransform = reshape(targetgeotransform, 2, 3)';
+    targetgeotransform = trhl.getTargetPoints();
+    targetgeotransform = targetgeotransform(1:3, 1:2);
 
     % Iterate over all times
     for i = 1:length(affine_transforms)
-        ftform = reshape(tform(:, i), 3, 2);
+        ftform = reshape(tform(i, :), 2, 3)';
         affine_transforms{i} = fitgeotrans(ftform, targetgeotransform, 'affine');
         affine_transforms{i}.T(3, 1) = affine_transforms{i}.T(3, 1)*p.binxy;
         affine_transforms{i}.T(3, 2) = affine_transforms{i}.T(3, 2)*p.binxy;

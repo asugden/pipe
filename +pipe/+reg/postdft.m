@@ -8,7 +8,7 @@ function translation = postdft(mov_path, startframe, ...
     % ----------------------------------
     
     % Read in data
-    data = pipe.imread(mov_path, startframe - 1, nframes, pmt, otlevel);
+    data = pipe.imread(mov_path, startframe, nframes, pmt, otlevel);
     translation = zeros(size(data, 3), 4);
     
     % Reduce size for DFT registration
