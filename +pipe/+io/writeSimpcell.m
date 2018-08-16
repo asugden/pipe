@@ -58,7 +58,7 @@ function writeSimpcell(mouse, date, run, server, varargin)
     raw = zeros(ncells, nframes);
     centroid = zeros(ncells, 2);
     
-    if ncells > 256
+    if ncells > 255
         masks = zeros(info.height, info.width, 'uint16');
     else
         masks = zeros(info.height, info.width, 'uint8');

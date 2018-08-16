@@ -20,7 +20,7 @@ function out = datedir(mouse, date, server)
     if isempty(mousedir), return; end
         
     matchstr1 = sprintf('%s_%s', date, mouse);
-    matchstr2 = sprintf('%s', date, mouse);
+    matchstr2 = sprintf('%s', date);
 
     if exist(fullfile(mousedir, matchstr1), 'file') > 0
         out = fullfile(mousedir, matchstr1);
