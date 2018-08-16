@@ -10,6 +10,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
     addOptional(p, 'edges', []);  % Will be set from pipe.lab.badedges if empty
     addOptional(p, 'pmt', 1, @isnumeric);  % REMEMBER, PMT is 1-indexed
     addOptional(p, 'target', 1, @isnumeric);  % Which value to use as the target for cross-run alignment (index of runs)
+                                              % If string, will align to that file
     addOptional(p, 'refsize', 500, @isnumeric);  % The number of frames to average for the reference image
     addOptional(p, 'refoffset', 500, @isnumeric);  % How many frames from the onset should the reference be made
     addOptional(p, 'target_rounds', 3, @isnumeric);  % Number of DFT rounds to align target movie
@@ -66,7 +67,12 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
     if sum(saveoutput) == 0, return; end
     
     % Restrict to only those paths that need alignment
-    targetpath = impaths{p.target};
+    if ischar(p.target)
+        targetpath = p.target;
+    else
+        targetpath = impaths{p.target};
+    end
+        
     newpaths = {};
     for i = 1:length(impaths)
         if saveoutput(i)
