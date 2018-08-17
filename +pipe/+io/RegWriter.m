@@ -1,10 +1,10 @@
-classdef RegWriter
+classdef RegWriter < handle
 % A class to write SBX files, which keeps track of the current position
     properties
         path = [];
         curframe = 1;
-        fid = -1;
         info = [];
+        fid = -1;
     end
     
     methods
@@ -25,6 +25,7 @@ classdef RegWriter
             
             obj.info = info;
             obj.path = path;
+            obj.fid = fopen(obj.path, 'w');
         end
         
         function write(obj, data)
@@ -60,9 +61,7 @@ classdef RegWriter
                 data = intmax('uint16') - permute(data, [1 3 2 4]);
                 data = reshape(data, [numel(data) 1]);
                 
-                fid = fopen(obj.path, 'a');
-                fwrite(fid, data, 'uint16');
-                fclose(fid);
+                fwrite(obj.fid, data, 'uint16');
                 
                 return;
             end
@@ -75,13 +74,15 @@ classdef RegWriter
             disp(obj.curframe);
             if isempty(obj.fid), error('No file to close.'); end
             if obj.curframe < obj.info.nframes, warndlg('Did not write enough frames'); end
-            % fclose(obj.fid);
+            fclose(obj.fid);
             
             % Note, add optional info writer
         end
         
         function delete(obj)
-            % fclose(obj.fid);
+            if ~isempty(obj.fid)
+                fclose(obj.fid);
+            end
         end
     end
 end

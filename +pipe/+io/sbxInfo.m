@@ -7,10 +7,24 @@ function nginfo = sbxInfo(path, force)
 
     % Make sure we're opening the info .mat file
     [parent, fname, ext] = fileparts(path);
-    regfind = strfind(fname, '_reg');
-    regfind2 = strfind(fname, '_xyreg');
-    if ~isempty(regfind), fname = fname(1:regfind-1); end
-    if ~isempty(regfind2), fname = fname(1:regfind2-1); end
+    
+    % LEGACY
+    % An annoying bit of legacy code, catch the fact that we used to split
+    % channels in registered files
+    splitchan = false;
+    if strcmp(ext, '.sbxreg') || strcmp(ext, '.sbxclean') || strcmp(ext, '.sbxregclean')
+        regfind = strfind(fname, '_reg');
+        regfind2 = strfind(fname, '_xyreg');
+        if ~isempty(regfind)
+            fname = fname(1:regfind-1); 
+            splitchan = true;
+        elseif ~isempty(regfind2)
+            fname = fname(1:regfind2-1); 
+            splitchan = true;
+        end
+    end
+    
+    % Find the name of the info file
     if ~isempty(parent), parent = [parent '\']; end
     base = [parent fname];
     ipath = [base '.mat'];
@@ -39,15 +53,9 @@ function nginfo = sbxInfo(path, force)
         % Load the .mat info file
         load(ipath);
 
-        % Add an alignment line if possible
-        if(exist([base, '.align']))
-            info.aligned = load([base, '.align'], '-mat');
-        else
-            info.aligned = [];
-        end   
-
+        % LEGACY
         % Account for the fact that we split channels for sbxreg files
-        if strcmp(ext, '.sbxreg') || strcmp(ext, '.sbxclean') || strcmp(ext, '.sbxregclean')
+        if splitchan
             info.nchan = 1;
             info.channels = 2;
         end
