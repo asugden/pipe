@@ -212,7 +212,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
                     tform = cell(info.nframes);
                 end
                 
-                trans(p.optotune_level:length(info.otwave):info.nframes) = ltrans;
+                trans(p.optotune_level:length(info.otwave):info.nframes, :) = ltrans;
                 tform(p.optotune_level:length(info.otwave):info.nframes) = ltform;
                 save(alignfile, 'tform', 'trans', 'binframes');
             end

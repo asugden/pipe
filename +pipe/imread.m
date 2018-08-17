@@ -19,7 +19,7 @@ function mov = imread(path, k, N, pmt, optolevel, varargin)
     % Set to start at beginning if necessary
     if nargin < 2, k = 1; end
     % Set in to read the whole file if unset
-    if nargin < 3 || N < 0, N = info.nframes - k; end
+    if nargin < 3 || isempty(N) || N < 0, N = -1; end
     % Automatically set the PMT to be green
     if nargin < 4, pmt = 1; end
     % Read a larger chunk if optotune was used
