@@ -19,7 +19,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
     addOptional(p, 'tbin', 1, @isnumeric);  % Number of seconds to average in time for the affine alignment. Set to 0 for affine every frame
     addOptional(p, 'binxy', 2, @isnumeric);  % The number of pixels to downsample in space
     addOptional(p, 'highpass_sigma', 5, @isnumeric);  % Size of Gaussian blur to be subtracted from a downsampled version of your image, only if affine
-    addOptional(p, 'pre_register', false, @isboolean);  % If affine, pre-register with DFT if true
+    addOptional(p, 'pre_register', false);  % If affine, pre-register with DFT if true
     addOptional(p, 'interpolation_type', 'spline');  % Used to be 'linear', changed to 'spline'
     
     % Extra options
@@ -41,9 +41,19 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
     
     info = pipe.metadata(impaths{1});
     if isempty(p.optotune_level) && info.optotune_used
-        for lvl = 1:info.otlevels
-            pars = p;
-            pars.optotune_level = lvl;
+        for lvl = 1:length(info.otwave)
+            pars = {};
+            fns = fieldnames(p);
+            for i = 1:length(fns)
+                if ~strcmp(fns{i}, 'optotune_level')
+                    pars{end + 1} = fns{i};
+                    pars{end + 1} = getfield(p, fns{i});
+                else
+                    pars{end + 1} = 'optotune_level';
+                    pars{end + 1} = lvl;
+                end
+            end
+            
             pipe.align(impaths, pars);
         end
     end

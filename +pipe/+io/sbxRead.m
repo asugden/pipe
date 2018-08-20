@@ -50,6 +50,10 @@ function x = sbxRead(path, k, N, pmt, optolevel)
     else
         optocycle = length(info.otwave);  % Length of the optotune cycle
         k = k*optocycle + (optolevel - 1);  % Set the actual beginning in the file
+        if k > info.nframes
+            x = [];
+            return;
+        end
         
         % Account for overrunning the number of frames
         if k + N*optocycle > info.nframes
