@@ -37,6 +37,17 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
     % first run
     % Depends on hardcoded location of ImageJ
     
+    %% Iterate over optotune levels if necessary
+    
+    info = pipe.metadata(impaths{1});
+    if isempty(p.optotune_level) && info.optotune_used
+        for lvl = 1:info.otlevels
+            pars = p;
+            pars.optotune_level = lvl;
+            pipe.align(impaths, pars);
+        end
+    end
+    
     %% Determine if output needs to be saved
     
     % Alignment extension
@@ -209,7 +220,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
                 else
                     trans = zeros(info.nframes, 4);
                     trans(:, :) = nan;
-                    tform = cell(info.nframes);
+                    tform = cell(1, info.nframes);
                 end
                 
                 trans(p.optotune_level:length(info.otwave):info.nframes, :) = ltrans;
