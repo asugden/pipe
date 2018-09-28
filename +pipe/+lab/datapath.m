@@ -46,6 +46,7 @@ function path = datapath(mouse, date, run, ftype, server, varargin)
     end
     
     % Get file type if desired, or return path
+    basepath = path;
     if isempty(ftype) || isempty(path)
         return
     end
@@ -127,7 +128,7 @@ function path = datapath(mouse, date, run, ftype, server, varargin)
     end
     
     if p.estimate && isempty(path)
-        path = fullfile(path, [sbxname '.' ftype]);
+        path = fullfile(basepath, [sbxname '.' ftype]);
     elseif ~p.estimate
         if ~exist(path, 'file')
             path = [];
