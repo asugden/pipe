@@ -3,7 +3,7 @@ function nginfo = sbxInfo(path, force)
 % WARNING: corrects the number of channels for .sbxreg and .sbxclean files
 
     % Declare both info_loaded and info as global variables
-    global info_loaded info
+    global pipe_info_loaded info
 
     % Make sure we're opening the info .mat file
     [parent, fname, ext] = fileparts(path);
@@ -32,18 +32,18 @@ function nginfo = sbxInfo(path, force)
 
     % Force reopening info if loading a file
     if nargin == 2 && force
-        if(~isempty(info_loaded))   % Close previous info file
+        if(~isempty(pipe_info_loaded))   % Close previous info file
             try
                 fclose(info.fid);
             catch
             end
-            info_loaded = [];
+            pipe_info_loaded = [];
         end
     end
     
     % Check if info is already loaded...
-    if(isempty(info_loaded) || ~strcmp(base, info_loaded))
-        if(~isempty(info_loaded))   % Close previous info file
+    if(isempty(pipe_info_loaded) || ~strcmp(base, pipe_info_loaded))
+        if(~isempty(pipe_info_loaded))   % Close previous info file
             try
                 fclose(info.fid);
             catch
@@ -61,7 +61,7 @@ function nginfo = sbxInfo(path, force)
         end
         
         % Save the name of the loaded info file
-        info_loaded = base;
+        pipe_info_loaded = base;
 
         % Fix mistakes from previous scanbox versions
         if(~isfield(info,'sz'))
