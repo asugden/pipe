@@ -17,6 +17,7 @@ function x = sbxRead(path, k, N, pmt, optolevel)
     info = pipe.io.sbxInfo(path, true);
 
     % Set to start at beginning if necessary
+    % Note- it is which volume if optolevel is not empty
     if nargin < 2, k = 1; end
     % Set in to read the whole file if unset
     if nargin < 3 || N < 0, N = info.nframes - k; end
@@ -57,7 +58,7 @@ function x = sbxRead(path, k, N, pmt, optolevel)
         
         % Account for overrunning the number of frames
         if k + N*optocycle > info.nframes
-            N = floor((info.nframes - k)/optocycle);
+            N = floor((info.max_idx - k)/optocycle);
         end
         
         bufwidth = info.nchan*info.sz(2)*info.recordsPerBuffer;
