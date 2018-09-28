@@ -160,7 +160,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
                 if p.verbose, fprintf('%Aligning %02i/%02i', c, nchunks); end
                 ootform{c} = pipe.reg.turboreg(targetrefs{r}, 'startframe', (c-1)*runchunksize+1, ...
                     'nframes', runchunksize, 'mov_path', path, 'binframes', ...
-                    binframes, 'pmt', p.pmt, 'edges', p.edges, ...
+                    binframes, 'pmt', p.pmt, 'edges', p.edges, 'binxy', p.binxy, ...
                     'optotune_level', p.optotune_level, ...
                     'sigma', p.highpass_sigma, 'pre_register', p.pre_register);
             end
@@ -174,7 +174,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
             known = zeros(1, nframes);
             for c = 1:nchunks
                 for f = 1:length(ootform{c})
-                    pos = (c - 1)*runchunksize + f*binframes + round(binframes/2);
+                    pos = (c - 1)*runchunksize + f*binframes + round((binframes - 1)/2);
                     if pos <= nframes
                         tform{pos} = ootform{c}{f};
                         if ~isempty(tform{pos})
