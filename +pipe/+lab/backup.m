@@ -5,7 +5,7 @@ function backup(user, mouse, dates, server, btype, overwrite)
 %   anastasia), or 'full' (copy all to R and anastasia)
 
     if nargin < 4, server = []; end
-    if nargin < 3, dates = pipe.lab.dates(mouse, server); end
+    if nargin < 3 || isempty(dates), dates = pipe.lab.dates(mouse, server); end
     if nargin < 5, btype = 'raw'; end
     if nargin < 6, overwrite = false; end
 
@@ -269,6 +269,7 @@ function path = cellClickedPath(mouse, date, runs, server)
             datapath = '\\twophoton_data\2photon\scan\jobdb\webserver\clicked\';
         end
         
+        nmftext = '';
         matchstr = sprintf('%s_%s_%03i%s', date, mouse, runs(end), nmftext);
         maxdate = -1;
         maxtime = -1;
