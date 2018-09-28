@@ -24,9 +24,9 @@ function success = writeTiff(array, filename, typestr)
 
     fs = ij.io.FileSaver(imp);
     if imp.getImageStackSize == 1
-        success = fs.saveAsTiff(fp);
+        success = fs.saveAsTiff(filename);
     else
-        success = fs.saveAsTiffStack(fp);
+        success = fs.saveAsTiffStack(filename);
     end    
     
     if ~success
