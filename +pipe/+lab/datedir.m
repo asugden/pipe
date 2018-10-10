@@ -18,6 +18,9 @@ function out = datedir(mouse, date, server)
     
     mousedir = pipe.lab.mousedir(mouse, server);
     if isempty(mousedir), return; end
+    
+    % Check date
+    if isnumeric(date), date = sprintf('%6i', date); end
         
     matchstr1 = sprintf('%s_%s', date, mouse);
     matchstr2 = sprintf('%s', date);
