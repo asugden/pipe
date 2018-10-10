@@ -9,7 +9,7 @@ function backup(user, mouse, dates, server, btype, overwrite)
     if nargin < 5, btype = 'raw'; end
     if nargin < 6, overwrite = false; end
 
-    rbase = 'R:\Andermann_Lab\Deep_storage_archive\2photon\';
+    rbase = 'R:\Andermann_Lab\active\2photon\';
     nasbase = '\\anastasia\data\2p\';
     % Note that cell-clicking paths are hardcoded below
     
@@ -65,7 +65,7 @@ function rawData(mouse, dates, server, archivebase, overwrite)
         
         runs = pipe.lab.runs(mouse, date, server);
         for run = runs
-            fprintf('Moving %s %6i %03i\n', mouse, date, run); 
+            fprintf('Moving raw data to %s: %s %6i %03i\n', archivebase, mouse, date, run); 
             destbase = fullfile(datebase, sprintf('%6i_%s_%03i', date, mouse, run));
             if ~exist(destbase), mkdir(destbase); end
             
@@ -136,6 +136,7 @@ function processedData(mouse, dates, server, archivebase, overwrite)
         'align', ...
         'alignaffine', ...
         'alignxy', ...
+        'decon', ...
         'dparams', ...
         'f2p', ...
         'ica', ...
@@ -165,7 +166,7 @@ function processedData(mouse, dates, server, archivebase, overwrite)
         copiedglm = false;
         runs = pipe.lab.runs(mouse, date, server);
         for run = runs
-            fprintf('Moving %s %6i %03i\n', mouse, date, run); 
+            fprintf('Moving processed data to %s: %s %6i %03i\n', archivebase, mouse, date, run); 
             destbase = fullfile(datebase, sprintf('%6i_%s_%03i', date, mouse, run));
             if ~exist(destbase), mkdir(destbase); end
             
