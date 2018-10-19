@@ -26,7 +26,7 @@ function x = sbxRead(path, k, N, pmt, optolevel)
     % Read a larger chunk if optotune was used
     if nargin < 5, optolevel = []; end
     % Make sure that we don't search beyond the end of the file
-    if N > info.nframes - k, N = info.nframes - k; end
+    if N > info.nframes - k + 1, N = info.nframes - k + 1; end
     % Check that optolevel isn't asking for something that doesn't exist
     if ~isempty(optolevel) && ~info.optotune_used
         error('Optotune was not used for this file.');

@@ -4,7 +4,7 @@ classdef RegWriter < handle
         path = [];
         curframe = 1;
         info = [];
-        fid = -1;
+        fid = [];
     end
     
     methods
@@ -47,7 +47,7 @@ classdef RegWriter < handle
             
             if ndims(data) == 4 && size(data, 1) == obj.info.nchan ...
                     && obj.info.sz(1) == size(data, 2) && obj.info.sz(2) == size(data, 3) ...
-                    && size(data, 4) + obj.curframe <= obj.info.nframes
+                    && size(data, 4) + obj.curframe - 1 <= obj.info.nframes
                 
                 if ~isa(data, 'uint16')
                     if min(data) < 0, warndlg('Data passes below 0'); end
@@ -71,11 +71,10 @@ classdef RegWriter < handle
         
         function close(obj)
             % Close and save the file
-            disp(obj.curframe);
             if isempty(obj.fid), error('No file to close.'); end
-            if obj.curframe < obj.info.nframes, warndlg('Did not write enough frames'); end
+            if obj.curframe <= obj.info.nframes, warndlg('Did not write enough frames'); end
             fclose(obj.fid);
-            
+            obj.fid = [];
             % Note, add optional info writer
         end
         
