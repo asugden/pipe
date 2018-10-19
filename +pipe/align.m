@@ -17,6 +17,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
     
     % Affine only
     addOptional(p, 'tbin', 1, @isnumeric);  % Number of seconds to average in time for the affine alignment. Set to 0 for affine every frame
+    addOptional(p, 'post_dft_if_unbinned', false);  % If true, run a post-dft even if not binned in time
     addOptional(p, 'binxy', 2, @isnumeric);  % The number of pixels to downsample in space
     addOptional(p, 'highpass_sigma', 5, @isnumeric);  % Size of Gaussian blur to be subtracted from a downsampled version of your image, only if affine
     addOptional(p, 'pre_register', false);  % If affine, pre-register with DFT if true
@@ -190,7 +191,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
 
             % Now fix interpolated registration with dft registration
             trans = zeros(nframes, 4);
-            if binframes > 1
+            if binframes > 1 || p.post_dft_if_unbinned
                 % Interpolate any missing frames
                 tform = interpolateTransform(tform, known, p.interpolation_type);
 
