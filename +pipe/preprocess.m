@@ -19,7 +19,7 @@ function preprocess(mouse, date, varargin)
     addOptional(p, 'runs', []);  % Defaults to all runs in the directory
     addOptional(p, 'force', false);  % Overwrite files if they exist
     addOptional(p, 'pmt', 1, @isnumeric);  % Which PMT to use for analysis, 1-green, 2-red
-    addOptionla(p, 'optotune_level', []);  % Which optotune level
+    addOptional(p, 'optotune_level', []);  % Which optotune level
     addOptional(p, 'axons', false);  % Whether or not to preprocess as axons rather than cells
     addOptional(p, 'aligntype', 'affine');  % Can be set to 'affine' or 'translation'
     addOptional(p, 'extraction', 'pcaica');  % or 'nmf', or 'none', Whether to use constrained non-negative matrix factorization or PCA/ICA
@@ -97,7 +97,7 @@ function preprocess(mouse, date, varargin)
 
         sbxpaths = {};
         for r = 1:length(runs)
-            sbxpaths{end+1} = pipe.path(mouse, date, runs(r), 'sbx', 'server', p.server);
+            sbxpaths{end+1} = pipe.path(mouse, date, runs(r), 'sbx', p.server);
         end
         p.has_mousedate = true;
     end
@@ -109,11 +109,10 @@ function preprocess(mouse, date, varargin)
     info = pipe.metadata(sbxpaths{1});
 
     % Set the target and account for overwriting
-    if isempty(p.target), p.target = sbxpaths{1}; end
+    if isempty(p.target), p.target = 1; end
     if isempty(p.edges), p.edges = pipe.lab.badedges(sbxpaths{1}); end
     if isempty(p.align_pmt), p.align_pmt = p.pmt; end
     if isempty(p.align_edges), p.align_edges = p.edges; end
-    if isempty(p.align_downsample_xy), p.align_downsample_xy = p.downsample_xy; end    
     
     % Set the correct sizes based on the objective being used
     if ~isempty(p.objective)
@@ -128,6 +127,7 @@ function preprocess(mouse, date, varargin)
         if isempty(p.maxarea), p.maxarea = maxa; end
         if isempty(p.downsample_xy), p.downsample_xy = dxy; end
     end
+    if isempty(p.align_downsample_xy), p.align_downsample_xy = p.downsample_xy; end    
     
     % Set the correct chunk size and downsampling based on framerate
     if info.framerate > 20, p.downsample_t = p.downsample_t*2; end
@@ -149,7 +149,7 @@ function preprocess(mouse, date, varargin)
     % if p.nomovetarget  % Use period of immobility to make target
     %     [p.refoffset, p.refsize] = sbxNoMoveTarget(mouse, date, p.target, p.refsize);
     % end
-    
+        
     pipe.align(sbxpaths, 'force', p.force, 'optotune_level', p.optotune_level, ...
         'edges', p.align_edges, 'pmt', p.align_pmt, 'target', p.target, ...
         'refsize', p.refsize, 'refoffset', p.refoffset, 'target_rounds', p.align_target_rounds, ...
@@ -194,38 +194,41 @@ function preprocess(mouse, date, varargin)
     
     if ~strcmpi(p.extraction, 'none') 
         savepath = sprintf('%s.ica', path(1:end-4));
-            
-        icaguidata = sbxExtractROIs(movpaths, savepath, p.edges, 'type', p.extraction, 'force', p.force, ...
-            'axons', p.axons, 'downsample_t', p.downsample_t, 'downsample_xy', p.downsample_xy, ...
-            'chunksize', chunksize, 'npcs', p.npcs, 'temporal_weight', p.temporal_weight, ...
-            'smoothing_width', p.smoothing_width, 'spatial_threshold_sd', p.spatial_threshold_sd, ...
-            'cellhalfwidth', p.cellhalfwidth, 'mergethreshold', p.mergethreshold, 'patchsize', p.patchsize, 'ncomponents', p.ncomponents, ...
-            'minarea', p.minarea, 'maxarea', p.maxarea, 'overlap', p.overlap, 'crosscorr', p.crosscorr,'firstpctokeep',p.firstpctokeep);
-
-        icaguidata.pars = p;
-        save(savepath, 'icaguidata', '-v7.3');
         
+        if ~exist(savepath) || p.force
+            icaguidata = pipe.rois(sbxpaths, savepath, p.edges, 'pmt', p.pmt, 'optolevel', p.optotune_level, ...
+                'type', p.extraction, 'force', p.force, ...
+                'axons', p.axons, 'downsample_t', p.downsample_t, 'downsample_xy', p.downsample_xy, ...
+                'chunksize', chunksize, 'npcs', p.npcs, 'temporal_weight', p.temporal_weight, ...
+                'smoothing_width', p.smoothing_width, 'spatial_threshold_sd', p.spatial_threshold_sd, ...
+                'cellhalfwidth', p.cellhalfwidth, 'mergethreshold', p.mergethreshold, 'patchsize', p.patchsize, 'ncomponents', p.ncomponents, ...
+                'minarea', p.minarea, 'maxarea', p.maxarea, 'overlap', p.overlap, 'crosscorr', p.crosscorr,'firstpctokeep',p.firstpctokeep);
+
+            icaguidata.pars = p;
+            save(savepath, 'icaguidata', '-v7.3');
+        end
+            
         % Make it clickable by the javascript functions
-        processForJavascript(mouse, date, runs, p.force, p.axons, p.server);
+        pipe.extract.cellclick_send_to_server(mouse, date, runs, savepath, p.force, p.axons, p.server);
     end
 
     %% Follow-up with optional images for checking
     
-    if p.pupil
-        if ~p.job
-            sbxPupilMasks(mouse, date, runs, p.server);
-        end
-        
-        sbxPupils(mouse, date, runs, p.server);
-    end
+%     if p.pupil
+%         if ~p.job
+%             sbxPupilMasks(mouse, date, runs, p.server);
+%         end
+%         
+%         sbxPupils(mouse, date, runs, p.server);
+%     end
     
     if p.testimages
-        for r = 1:length(runs)
-            sbxFirstLast(mouse, date, runs(r), p.refsize, p.pmt, 'server', p.server);
-            sbxStimulusTiff(mouse, date, runs(r), p.pmt, p.server);
+        for r = 1:length(sbxpaths)
+            pipe.extract.firstlast_movie(sbxpaths{r}, p.refsize, p.pmt);
+            pipe.extract.stimulus_tiff(mouse, date, runs(r), p.pmt, p.server);
         end
 
-        sbxAlignAffineTest(mouse, date, runs, p.refpmt, p.server);
+        % sbxAlignAffineTest(mouse, date, runs, p.refpmt, p.server);
     end
 end
 
