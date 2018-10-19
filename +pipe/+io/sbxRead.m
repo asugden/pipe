@@ -20,13 +20,13 @@ function x = sbxRead(path, k, N, pmt, optolevel)
     % Note- it is which volume if optolevel is not empty
     if nargin < 2, k = 1; end
     % Set in to read the whole file if unset
-    if nargin < 3 || N < 0, N = info.nframes - k; end
+    if nargin < 3 || N < 0, N = info.nframes - (k - 1); end
     % Automatically set the PMT to be green
     if nargin < 4, pmt = 1; end
     % Read a larger chunk if optotune was used
     if nargin < 5, optolevel = []; end
     % Make sure that we don't search beyond the end of the file
-    if N > info.nframes - k + 1, N = info.nframes - k + 1; end
+    if N > info.nframes - (k - 1), N = info.nframes - (k - 1); end
     % Check that optolevel isn't asking for something that doesn't exist
     if ~isempty(optolevel) && ~info.optotune_used
         error('Optotune was not used for this file.');

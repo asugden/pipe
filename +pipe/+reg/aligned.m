@@ -22,7 +22,7 @@ function data = aligned(path, regpath, k, N, pmt, optolevel)
     reg = load(regpath, '-mat');
     
     % Get the positions to return, accounting for optotune levels
-    pos = k:k + size(data, 3) - 1;
+    pos = k:(k - 1) + size(data, 3);
     if ~isempty(optolevel) && info.optotune_used
         pos = optotune_level:length(info.otwave):info.nframes;
         pos = pos(pos >= k);
