@@ -19,7 +19,7 @@ function preprocess(mouse, date, varargin)
     addOptional(p, 'runs', []);  % Defaults to all runs in the directory
     addOptional(p, 'force', false);  % Overwrite files if they exist
     addOptional(p, 'pmt', 1, @isnumeric);  % Which PMT to use for analysis, 1-green, 2-red
-    addOptionla(p, 'optotune_level', []);  % Which optotune level
+    addOptional(p, 'optotune_level', []);  % Which optotune level
     addOptional(p, 'axons', false);  % Whether or not to preprocess as axons rather than cells
     addOptional(p, 'aligntype', 'affine');  % Can be set to 'affine' or 'translation'
     addOptional(p, 'extraction', 'pcaica');  % or 'nmf', or 'none', Whether to use constrained non-negative matrix factorization or PCA/ICA

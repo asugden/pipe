@@ -208,8 +208,8 @@ end
 
 
 function status = copyWithChecks(ftype, srcbase, destbase, src, dest, overwrite, verbose)
-%BACKUPDATAWITHCHECKS Copy a file over to R, checking that it needs to be
-%   copied, throwing errors, and displaying results
+%COPYWITHCHECKS Copy a file, checking that it needs to be copied,
+% throwing errors, and displaying results
 
     if nargin < 7, verbose = true; end
     
