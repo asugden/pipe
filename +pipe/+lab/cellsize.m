@@ -12,7 +12,7 @@ function [cellhalfwidth, minarea, maxarea, downsample_xy] = ...
         minarea = round((zoom/1.6)*25)*((25.0/16)*(25.0/16));
         maxarea = round((zoom/1.6)*500)*((25.0/16)*(25.0/16));
         downsample_xy = 2;
-    elseif strcmpi(objective, '10x')
+    elseif strcmpi(objective, 'olympus10x_3mmWD') || strcmpi(objective, 'olympus10x_8mmWD')
         cellhalfwidth = (zoom/1.6)*2.5*(10.0/16);
         minarea = round((zoom/1.6)*25)*((10.0/16)*(10.0/16));
         maxarea = round((zoom/1.6)*500)*((10.0/16)*(10.0/16));
