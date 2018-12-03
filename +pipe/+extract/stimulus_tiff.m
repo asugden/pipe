@@ -10,11 +10,11 @@ function stimulus_tiff(mouse, date, run, pmt, server, fast)
     poststim = 2;
 
     % Get the onset times
-    ons = pipe.io.sbxOnsets(mouse, date, run, server);
+    ons = pipe.io.trial_times(mouse, date, run, server);
     if isfield(ons, 'onsets') < 1, return; end
     
     % Load in the movies
-    path = pipe.path(mouse, date, run, 'sbx', 'server', server);
+    path = pipe.path(mouse, date, run, 'sbx', server);
     
     info = pipe.metadata(path);
     fr = info.framerate;
@@ -40,7 +40,7 @@ function stimulus_tiff(mouse, date, run, pmt, server, fast)
                     end
                 end
 
-                writetiff(nim, spath, 'double');
+                pipe.write_tiff(nim, spath, 'double');
             end
         end
     end     

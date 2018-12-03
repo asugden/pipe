@@ -3,7 +3,7 @@ function cellclick_send_to_server(mouse, date, runs, icapath, force, axon, serve
 %   Detailed explanation goes here
 
     if nargin < 7, server = []; end
-    if nargin < 3 || isempty(runs), runs = sbxRuns(mouse, date, server); end    
+    if nargin < 3 || isempty(runs), runs = pipe.lab.runs(mouse, date, server); end    
     if nargin < 5 || isempty(force), force = false; end
     if nargin < 6 || isempty(axon), axon = false; end
     if nargin < 8 || isempty(nmf), nmf = false; end
@@ -11,9 +11,9 @@ function cellclick_send_to_server(mouse, date, runs, icapath, force, axon, serve
     icarun = runs(end);
     nmftext = '';
     if nargin < 4 || isempty(icapath)
-        icapath = sbxPath(mouse, date, icarun, 'ica', 'server', server);
+        icapath = pipe.path(mouse, date, icarun, 'ica', server);
         if nmf || isempty(icapath)
-            icapath = sbxPath(mouse, date, icarun, 'icanmf', 'server', server);
+            icapath = pipe.path(mouse, date, icarun, 'icanmf', server);
             nmftext = '_nmf';
         end
     end
