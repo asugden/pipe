@@ -181,6 +181,7 @@ function preprocess(mouse, date, varargin)
         save(sprintf('%s\\%s_%s_%s%s.mat', job_path, ...
             timestamp(), user, job, extra), 'mouse', 'date', 'job', ...
             'time', 'user', 'pars');
+        return;
     end
     
     %% Align
