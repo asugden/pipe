@@ -102,7 +102,9 @@ function pars = add_server(pars, server)
     found = false;
     for i = 0:length(pars)/2 - 1
         if strcmp(pars{2*i + 1}, 'server')
-            pars{2*i + 2} = server;
+            if isempty(pars{2*i + 2})
+                pars{2*i + 2} = server;
+            end
             found = true;
         end
     end
