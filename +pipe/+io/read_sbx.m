@@ -14,7 +14,7 @@ function x = read_sbx(path, k, N, pmt, optolevel)
     % If N<0 it returns an array to the end
 
     % Force a reload of the global info variables. Without this, trouble arises
-    info = pipe.io.sbxInfo(path, true);
+    info = pipe.io.read_sbxinfo(path, true);
 
     % Set to start at beginning if necessary
     % Note- it is which volume if optolevel is not empty

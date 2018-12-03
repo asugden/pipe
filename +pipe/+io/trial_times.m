@@ -54,6 +54,36 @@ function out = trial_times(mouse, date, run, server, force, allowrunthrough, int
     % Load in the monkeylogic file
     ml = pipe.load(mouse, date, run, 'bhv', server);
     
+    % Clean up duplicated stimuli (only for shown stimuli)
+    conds = zeros(1, length(ml.TimingFileByCond));
+    for i = 1:length(ml.TimingFileByCond)
+        conds(i) = sum(ml.ConditionNumber == i);
+    end
+        
+    for i = 2:length(ml.TimingFileByCond)
+        if conds(i) > 0
+            tfile = strrep(lower(ml.TimingFileByCond{i}), '_runtime', '');
+            
+            for j = 1:i-1
+                if conds(j) > 0 && strcmp(tfile, strrep(lower(ml.TimingFileByCond{j}), '_runtime', ''))
+                    % Found a matching condition file, now checking for
+                    % matching movies
+                    matched = true;
+                    for k = 1:size(ml.TaskObject, 2)
+                        if ml.TaskObject{i, k} ~= ml.TaskObject{j, k}
+                            matched = false;
+                        end
+                    end
+                    
+                    if matched
+                        ml.ConditionNumber(ml.ConditionNumber == i) = j;
+                        conds(i) = 0;
+                    end
+                end
+            end
+        end
+    end
+    
     % Get the timing of visual stimuli
     [onsetst, offsetst] = ttledges(nidaq.visstim, nidaq.timeStamps, miniti, ttlv);
     
@@ -253,6 +283,14 @@ function codes = timingFileCodes(ml)
         'csm_primetime.m', 'minus', ...
         'csn_cond_2s_end_dis1.m', 'disengaged1', ...
         'csn_cond_2s_end_dis2.m', 'disengaged2', ...
+        'ori_cond_2s_end.m', 'orientation', ...
+        'pavlovian_csp_3s.m', 'pavlovian', ...
+        'csp_cond_3s_end.m', 'plus', ...
+        'csm_cond_3s_end.m', 'minus', ...
+        'csn_cond_3s_end.m', 'neutral', ...
+        'csp_cond_3s_catch_end.m', 'plus', ...
+        'csp_cond_3s_end_aud.m', 'plus', ...
+        'pavlovian_csp_2s_aud.m', 'pavlovian', ...
     };
     nnames = length(nametable)/2;
 
@@ -279,6 +317,17 @@ function codes = timingFileCodes(ml)
             end
 
             vals{end+1} = i;
+            
+            % Check for multi-contrast runs
+            for j = 1:size(ml.TaskObject, 2)
+                if ~isempty(strfind(ml.TaskObject{i, j}, 'Mov'))
+                    if ~isempty(strfind(ml.TaskObject{i, j}, 'Contr_0.1'))
+                        names{end} = [names{end} '_low'];
+                    elseif ~isempty(strfind(ml.TaskObject{i, j}, 'Contr_0.3'))
+                        names{end} = [names{end} '_med'];
+                    end
+                end
+            end
         end
     end
     
@@ -293,7 +342,16 @@ function [oris, codes] = orientationCodes(ml, codes)
     nametable = { ...
         'Mov(CSp_primetime,0,0)', 0, ...
         'Mov(CSn_primetime,0,0)', 135, ...
-        'Mov(CSm_primetime,0,0)', 270
+        'Mov(CSm_primetime,0,0)', 270, ...
+        'Mov(Ori_0,0,0)', 0, ...
+        'Mov(Ori_0,0,45)', 45, ...
+        'Mov(Ori_0,0,90)', 90, ...
+        'Mov(Ori_0,0,135)', 135, ...
+        'Mov(Ori_0,0,180)', 180, ...
+        'Mov(Ori_0,0,225)', 225, ...
+        'Mov(Ori_0,0,270)', 270, ...
+        'Mov(Ori_0,0,315)', 315, ...
+        'Mov(dis_67_pt_5deg_FF,0,0)', 67.5, ...
     };
     nnames = length(nametable)/2;
     npossibles = size(ml.TaskObject, 2);

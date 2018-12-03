@@ -1,4 +1,4 @@
-function simpcell(mouse, date, run, varargin)
+function write_simpcell(mouse, date, run, varargin)
 %SIMPCELL Generate simpcell file, which contains all possible data
 %   run can be empty (all runs of the date), an int, or a vector
 
@@ -12,6 +12,7 @@ function simpcell(mouse, date, run, varargin)
     addOptional(p, 'deconvolved', true);  % Deconvolve and include deconvolved traces if true
     addOptional(p, 'pupil', false);       % Add pupil data-- turned off until improvements are made
     addOptional(p, 'photometry', false);  % Add photometry data
+    addOptional(p, 'photometry_fiber', 1);% Which photometry fiber(s) to include, can be array
     addOptional(p, 'tags', {});           % Add single-word tags such as 'naive', 'hungry', 'sated'
     addOptional(p, 'training', false);    % Guess if a training run. If set to true, 
                                           % it will throw an error if not a training run.
@@ -62,17 +63,17 @@ function simpcell(mouse, date, run, varargin)
     if p.f0, savevars{end+1} = 'f0'; end
     
     % Load info file and get framerate
-    info = pipe.metadata(pipe.path(mouse, date, run, 'sbx', 'server', p.server));
-    framerate = info.framerate;
+    info = pipe.metadata(pipe.path(mouse, date, run, 'sbx', p.server));
+    framerate = single(info.framerate);
     
     % Prep the output
-    ncells = length(gd.cellsort) - 1;
-    nframes = length(gd.cellsort(1).timecourse.dff_axon);
-    neuropil = gd.cellsort(end).timecourse.dff_axon;
+    ncells = int16(length(gd.cellsort) - 1);
+    nframes = int32(length(gd.cellsort(1).timecourse.dff_axon));
+    neuropil = single(gd.cellsort(end).timecourse.dff_axon);
     dff = zeros(ncells, nframes, 'single');
     f0 = zeros(ncells, nframes, 'single');
     raw = zeros(ncells, nframes, 'single');
-    centroid = zeros(ncells, 2);
+    centroid = zeros(ncells, 2, 'single');
     
     if ncells > 255
         masks = zeros(info.height, info.width, 'uint16');
@@ -92,7 +93,7 @@ function simpcell(mouse, date, run, varargin)
             mask = gd.cellsort(i).mask;
         end
         
-        masks(mask) = i;
+        masks(mask') = i;
         
         centr = regionprops(mask);
         if ~isempty(centr)
@@ -132,7 +133,7 @@ function simpcell(mouse, date, run, varargin)
         end
     end
     
-    brainmotion = pipe.proc.brainposition(mouse, date, run, p.server);
+    brainmotion = single(pipe.proc.brainposition(mouse, date, run, p.server));
     
     if p.pupil
         savevars = [savevars, 'pupil'];
@@ -153,7 +154,7 @@ function simpcell(mouse, date, run, varargin)
             save(dpath, 'deconvolved');
         else
             decon = load(decon_path, '-mat');
-            deconvolved = decon.deconvolved;
+            deconvolved = single(decon.deconvolved);
         end
     end
     
@@ -182,7 +183,78 @@ function simpcell(mouse, date, run, varargin)
         licking = ons.licking;
     end
     
+    %% Photometry
+    
+    if p.photometry
+        savevars = [savevars {'photometry_dff', 'photometry_raw'}];
+        
+        ephys = pipe.io.read_sbxephys(mouse, date, run, p.server);
+        
+        if p.photometry_fiber == 1
+            photometry_dff = localMatchPhotometry2P(ephys.frames2p, ephys.photometry1, ephys.Fs, nframes, true);
+            photometry_raw = localMatchPhotometry2P(ephys.frames2p, ephys.photometry1, ephys.Fs, nframes, false);
+        elseif p.photometry_fiber == 2
+            photometry_dff = localMatchPhotometry2P(ephys.frames2p, ephys.photometry2, ephys.Fs, nframes, true);
+            photometry_raw = localMatchPhotometry2P(ephys.frames2p, ephys.photometry2, ephys.Fs, nframes, false);
+        elseif length(p.photometry_fiber) == 2
+            photometry_dff = zeros(2, nframes);
+            photometry_raw = zeros(2, nframes);
+            
+            photometry_dff(1, :) = localMatchPhotometry2P(ephys.frames2p, ephys.photometry1, ephys.Fs, nframes, true);
+            photometry_raw(1, :) = localMatchPhotometry2P(ephys.frames2p, ephys.photometry1, ephys.Fs, nframes, false);
+            
+            photometry_dff(2, :) = localMatchPhotometry2P(ephys.frames2p, ephys.photometry2, ephys.Fs, nframes, true);
+            photometry_raw(2, :) = localMatchPhotometry2P(ephys.frames2p, ephys.photometry2, ephys.Fs, nframes, false);
+        else
+            error('Photometry fibers < 1 or > 2 are not implemented.');
+        end 
+    end
+    
     %% Save
     
     save(spath, savevars{:})
+end
+
+
+function out = localMatchPhotometry2P(frames, photometry, sampling_rate, nframes, axondff)
+%MATCHPHOTOMETRYTO2P Extract the photometry trace, downsample, and match to
+%   the onsets of 2p frames
+
+    % Find the onsets if 2-photon frames
+    onsets = find(diff(ephys.frames2p > 2.5) == 1);
+    donsets = diff(onsets);
+    sampling_2p = sampling_rate/mean(donsets);
+    
+    % Subset the photometry window
+    photometry = reshape(photometry, 1, length(photometry));
+    photometry = photometry(onsets(1):onsets(end) + median(donsets));
+    photometry(1) = photometry(2);
+    
+    % Get the appropriate sampling rate correction
+    tol = 0.0000001;
+    [num, den] = rat(sampling_2p/sampling_rate, tol);
+    while num*den < 2^31 && tol > 1e-31
+        tol = tol/10;
+        [num, den] = rat(sampling_2p/sampling_rate, tol);
+    end
+    [num, den] = rat(sampling_2p/sampling_rate, tol*10);
+    
+    % And resample
+    out = resample(photometry, num, den);
+    if axondff
+        out = percentiledff(out, sampling_2p);
+    end
+    
+    % Cut down the frames to the correct size
+    if nframes > length(out)
+        tempphot = zeros(1, nframes);
+        tempphot(1:length(out)) = out;
+        out = tempphot;
+    end
+    out = out(1:nframes);
+    dphotlen = nframes - length(out);
+    if dphotlen > 0
+        appendarr = ones(1, dphotlen)*out(end);
+        out = [out appendarr];
+    end
 end
