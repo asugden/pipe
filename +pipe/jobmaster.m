@@ -69,7 +69,7 @@ function jobmaster(varargin)
             tic;
             switch job.job
                 case 'preprocess'
-                    fprintf('\n\n\n\n-----\nPreprocessing file %s at %s', fname, pipe.misc.timestamp());
+                    fprintf('\n\n\n\n-----\nPreprocessing file %s at %s\n', fname, pipe.misc.timestamp());
                     try 
                         job.pars = add_server(job.pars, server);
                         job.pars{end+1} = 'run_as_job';

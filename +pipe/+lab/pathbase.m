@@ -3,21 +3,9 @@ function base = pathbase(server, jobdb_only)
 %   on servers and host names.
 
     % Cache the hostname to accurately get the server
-    persistent cached_hostname
-    if ~isempty(cached_hostname)
-        hn = cached_hostname;
-    else
-        [success, syshostname] = system('hostname');
+    hn = pipe.misc.hostname();
 
-        % some error checks
-        assert(success == 0, 'Error running hostname');
-        assert(~any(syshostname == '.'), 'Dots found in hostname: is it a fqdn?');
-
-        hn = deblank(syshostname);
-        cached_hostname = hn;
-    end
-
-    if nargin > 1 && jobdb_only
+    if nargin > 1 && jobdb_only && strcmpi(server, 'storage')
         server = hn;
     end
     

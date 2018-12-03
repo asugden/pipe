@@ -166,7 +166,7 @@ function preprocess(mouse, date, varargin)
         end
 
         % And save
-        job_path = pipe.lab.jobdb(p.server, p.priority);
+        job_path = pipe.lab.jobdb([], p.priority);
         job = 'preprocess';
         time = timestamp();
         user = getenv('username');

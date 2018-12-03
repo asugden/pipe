@@ -1,7 +1,7 @@
 function path = jobdb(server, priority, startup)
 %JOBDB Path to the job database
 
-    base = pipe.lab.pathbase(server, true);
+    base = pipe.lab.pathbase(server);
         
     if strcmpi(priority, 'error')
         path = fullfile(base, 'jobdb', 'errorjobs');
