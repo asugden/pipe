@@ -13,6 +13,7 @@ function out = rundir(mouse, date, run, server)
 %       pathbase\CB173\160519\160519_CB173_008\
     
     if ~isinteger(run) && ~isfloat(run), run = str2num(run); end
+    if isnumeric(date), date = num2str(date); end
     
     out = [];
     mousedir = pipe.lab.datedir(mouse, date, server);

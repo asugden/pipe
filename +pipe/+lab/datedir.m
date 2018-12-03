@@ -13,6 +13,7 @@ function out = datedir(mouse, date, server)
 %       pathbase\CB173\160519\160519_CB173_008\
 
     if nargin < 3, server = []; end
+    if isnumeric(date), date = num2str(date); end
     
     out = [];
     
