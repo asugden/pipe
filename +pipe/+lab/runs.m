@@ -8,10 +8,10 @@ function out = runs(mouse, date, server)
     % Initialize the base directory and scan directory
     % Get the base directory from sbxDir.
     
+    out = [];
     searchdir = pipe.lab.datedir(mouse, date, server);
     if isempty(searchdir), disp('ERROR: Directory not found'); return; end
     matchstr = sprintf('%s_%s_run', date, mouse);
-    out = [];
     
     % Search for all directory titles that match a run
     fs = dir(searchdir);

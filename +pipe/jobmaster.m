@@ -81,7 +81,7 @@ function jobmaster(varargin)
                         disp(['Error on job ' fname]);
                         
                         % Write error info to file
-                        fid = fopen(fullfile(path_error, [fname '.log'], 'w+'));
+                        fid = fopen(fullfile(path_error, [fname '.log']), 'w+');
                         fprintf(fid, '%s', err.getReport('extended', 'hyperlinks', 'off'));
                         fclose(fid);
                     end

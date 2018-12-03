@@ -42,7 +42,7 @@ function [ output_args ] = dprime(mouse, dates, runs, server, separate_runs)
                     used_runs = [used_runs run];
                 end
                 
-                if separate_runs
+                if separate_runs && ~isempty(ons)
                     dp = norminv((nhits + 0.5)/(nplus + 1.0)) - norminv((nfas + 0.5)/(nminus + 1.0));
                     fprintf('%s\t%6i\t%3i\t%.3f\t%i/%i\t%i/%i\n', mouse, date, run, dp, nhits, nplus, nfas, nminus);
                 end
@@ -50,7 +50,7 @@ function [ output_args ] = dprime(mouse, dates, runs, server, separate_runs)
         end
         
         % loglinear method - see Stanislow and Todorov, 1999
-        if ~separate_runs
+        if ~separate_runs && ~isempty(used_runs)
             dp = norminv((nhits + 0.5)/(nplus + 1.0)) - norminv((nfas + 0.5)/(nminus + 1.0));
             fprintf('%s\t%6i\t%6s\t%.3f\t%i/%i\t%i/%i\n', mouse, date, combine_runs(used_runs), dp, nhits, nplus, nfas, nminus);
         end
