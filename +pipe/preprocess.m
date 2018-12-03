@@ -13,7 +13,8 @@ function preprocess(mouse, date, varargin)
     % Most important variables
     addOptional(p, 'sbxpaths', []);  % If set to a cell array of paths, mouse and date will be ignored
     addOptional(p, 'target', []);  % Target run to align to, default runs(1)
-    addOptional(p, 'job', false);  % Set to true if run as a batch, blocks user interaction
+    addOptional(p, 'job', true);  % Set to true to run as a job, set to false to run immediately.
+    addOptional(p, 'priority', 'med');  % Set the priority to be low, medium, or high. Default is medium.
     addOptional(p, 'server', []);  % Add in the server name as a string
     % addOptional(p, 'pupil', false);  % Extract pupil diameter if possible
     addOptional(p, 'runs', []);  % Defaults to all runs in the directory
@@ -78,6 +79,9 @@ function preprocess(mouse, date, varargin)
     addOptional(p, 'align_pmt', [], @isnumeric);  % Which PMT to use for registration, 1-green, 2-red
     addOptional(p, 'align_downsample_xy', [], @isnumeric);  % Pixels to downsample in xy, will be set to downsample_xy if empty
     % addOptional(p, 'align_from_pcaclean', false);  %
+    
+    % Used by job system- do not set.
+    addOptional(p, 'run_as_job', false);
 
     if length(varargin) == 1 && iscell(varargin{1}), varargin = varargin{1}; end
     parse(p, varargin{:});
@@ -86,6 +90,10 @@ function preprocess(mouse, date, varargin)
     %% Clean up inputs based on data about the file and force into a list 
     %  of .sbx files (so that this function can easily be duplicated for
     %  paths only
+    
+    if ~isempty(date) && ischar(date)
+        date = str2num(date);
+    end
     
     if ~isempty(p.sbxpaths)
         sbxpaths = p.sbxpaths;
@@ -143,6 +151,35 @@ function preprocess(mouse, date, varargin)
             p.testimages = false;
         end
     end 
+    
+    %% Save job if necessary
+    
+    % Convert parameters to struct
+    pars = {};
+    fns = fieldnames(p);
+    for i = 1:length(fns)
+        if ~strcmp(fns{i}, 'runs') && ~strcmp(fns{i}, 'priority') && ~strcmp(fns{i}, 'pupil')
+            pars{end + 1} = fns{i};
+            pars{end + 1} = getfield(p, fns{i});
+        end
+    end
+    
+    % And save
+    job_path = pipe.lab.jobdb(p.server, p.priority);
+    job = 'preprocess';
+    time = timestamp();
+    user = getenv('username');
+    extra = '';
+    if ~isempty(mouse)
+        extra = [extra '_' mouse];
+    end
+    if ~isempty(date)
+        extra = [extra '_' num2str(date)];
+    end
+    
+    save(sprintf('%s\\%s_%s_%s%s.mat', job_path, ...
+        timestamp(), user, job, extra), 'mouse', 'date', 'job', ...
+        'time', 'user', 'pars');
     
     %% Align
     

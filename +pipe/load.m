@@ -18,15 +18,17 @@ function out = load(mouse, date, run, ftype, server)
     % Read the necessary filetypes differently
     switch ftype
         case 'bhv'
-            out = pipe.io.readBhv(path);
+            out = pipe.io.read_bhv(path);
         case 'ephys'
-            out = pipe.io.sbxEphys(mouse, date, run, server);
+            out = pipe.io.read_sbxephys(mouse, date, run, server);
         case 'info'
-            out = pipe.info(path);
+            out = pipe.metadata(path);
         case 'onsets'
-            out = pipe.io.sbxOnsets(mouse, date, run, server);
+            out = pipe.io.trial_times(mouse, date, run, server);
         case 'tif'
-            out = pipe.io.readTiff(path);
+            out = pipe.io.read_tiff(path);
+        case 'trials'
+            out = pipe.io.trial_times(mouse, date, run, server);
         otherwise
             if ~exist(path, 'file')
                 error('File not found');
