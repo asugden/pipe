@@ -9,19 +9,7 @@ function runimagej()
     persistent imagej_loaded
     if isempty(imagej_loaded)
         %% Get hostname
-        persistent cached_hostname
-        if ~isempty(cached_hostname)
-            hn = cached_hostname;
-        else
-            [success, syshostname] = system('hostname');
-
-            % some error checks
-            assert(success == 0, 'Error running hostname');
-            assert(~any(syshostname == '.'), 'Dots found in hostname: is it a fqdn?');
-
-            hn = deblank(syshostname);
-            cached_hostname = hn;
-        end
+        hn = pipe.misc.hostname()
 
         %% Get the Fiji directory
         % fiji_directory = fileparts(fileparts(mfilename('fullpath')));
@@ -39,7 +27,12 @@ function runimagej()
         % Switch off warning
         warning_state = warning('off');
 
-        ijroot = 'D:\twophoton_data\2photon\scan\pipeline\minimal_ImageJ';
+        if strcmpi(hn, 'megatron')
+            ijroot = 'D:\twophoton_data\2photon\scan\pipeline\minimal_ImageJ';
+        elseif strcmpi(hn, 'santiago')
+            ijroot = 'D:\Analysis_scripts\pipeline\minimal_ImageJ';
+        end
+            
         javaaddpath(fullfile(ijroot,'ij.jar'));
         add_to_classpath(classpath, fullfile(ijroot, 'plugins'));
         
