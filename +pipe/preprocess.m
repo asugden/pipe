@@ -154,32 +154,34 @@ function preprocess(mouse, date, varargin)
     
     %% Save job if necessary
     
-    % Convert parameters to struct
-    pars = {};
-    fns = fieldnames(p);
-    for i = 1:length(fns)
-        if ~strcmp(fns{i}, 'runs') && ~strcmp(fns{i}, 'priority') && ~strcmp(fns{i}, 'pupil')
-            pars{end + 1} = fns{i};
-            pars{end + 1} = getfield(p, fns{i});
+    if p.job && ~p.run_as_job
+        % Convert parameters to struct
+        pars = {};
+        fns = fieldnames(p);
+        for i = 1:length(fns)
+            if ~strcmp(fns{i}, 'runs') && ~strcmp(fns{i}, 'priority') && ~strcmp(fns{i}, 'pupil')
+                pars{end + 1} = fns{i};
+                pars{end + 1} = getfield(p, fns{i});
+            end
         end
+
+        % And save
+        job_path = pipe.lab.jobdb(p.server, p.priority);
+        job = 'preprocess';
+        time = timestamp();
+        user = getenv('username');
+        extra = '';
+        if ~isempty(mouse)
+            extra = [extra '_' mouse];
+        end
+        if ~isempty(date)
+            extra = [extra '_' num2str(date)];
+        end
+
+        save(sprintf('%s\\%s_%s_%s%s.mat', job_path, ...
+            timestamp(), user, job, extra), 'mouse', 'date', 'job', ...
+            'time', 'user', 'pars');
     end
-    
-    % And save
-    job_path = pipe.lab.jobdb(p.server, p.priority);
-    job = 'preprocess';
-    time = timestamp();
-    user = getenv('username');
-    extra = '';
-    if ~isempty(mouse)
-        extra = [extra '_' mouse];
-    end
-    if ~isempty(date)
-        extra = [extra '_' num2str(date)];
-    end
-    
-    save(sprintf('%s\\%s_%s_%s%s.mat', job_path, ...
-        timestamp(), user, job, extra), 'mouse', 'date', 'job', ...
-        'time', 'user', 'pars');
     
     %% Align
     
