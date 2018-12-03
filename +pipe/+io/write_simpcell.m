@@ -1,33 +1,44 @@
-function writeSimpcell(mouse, date, run, server, varargin)
-%SAVESIMPCELL Generate simpcell options generally
+function simpcell(mouse, date, run, varargin)
+%SIMPCELL Generate simpcell file, which contains all possible data
 %   run can be empty (all runs of the date), an int, or a vector
 
     p = inputParser;
     % ---------------------------------------------------------------------
     % Most important variables
-    addOptional(p, 'force', false);  % If true, overwrite simpcell files
-    addOptional(p, 'raw', true);  % Include the raw data
-    addOptional(p, 'f0', true);  % Include the running f0 baseline
+    addOptional(p, 'server', []);         % Server name, empty if the same server
+    addOptional(p, 'force', false);       % If true, overwrite simpcell files
+    addOptional(p, 'raw', true);          % Include the raw data
+    addOptional(p, 'f0', true);           % Include the running f0 baseline
     addOptional(p, 'deconvolved', true);  % Deconvolve and include deconvolved traces if true
+    addOptional(p, 'pupil', false);       % Add pupil data-- turned off until improvements are made
+    addOptional(p, 'photometry', false);  % Add photometry data
+    addOptional(p, 'tags', {});           % Add single-word tags such as 'naive', 'hungry', 'sated'
+    addOptional(p, 'training', false);    % Guess if a training run. If set to true, 
+                                          % it will throw an error if not a training run.
     
     if length(varargin) == 1 && iscell(varargin{1}), varargin = varargin{1}; end
     parse(p, varargin{:});
     p = p.Results;
     
+    % Set the default values for mouse, date, and run
     if isnumeric(date), date = num2str(date); end
-    if nargin < 4, server = []; end
-    if nargin < 3, run = pipe.lab.runs(mouse, date, server); end
+    if nargin < 3, run = pipe.lab.runs(mouse, date, p.server); end
     
+    % Iterate over every run
     if length(run) > 1
         for r = run
-            pipe.io.simpcell(mouse, date, r, server, p);
+            pipe.io.simpcell(mouse, date, r, p);
         end
     end
+    
+    %% The version number to be saved
+    
+    version = 1.0;
 
     %% Check if function should be run and load all essential data
     
     % Make the simpcell path and check if it exists if necessary
-    spath = pipe.path(mouse, date, run, 'simpcell', server);
+    spath = pipe.path(mouse, date, run, 'simpcell', p.server, 'estimate', true);
     if ~p.force && exist(spath), return; end
     
     % Load cellsort file
@@ -37,25 +48,30 @@ function writeSimpcell(mouse, date, run, server, varargin)
     end
     
     % And initalize names of variables to be saved
-    savevars = {};
+    savevars = {'version'};
+    if ~isempty(p.tags)
+        tags = p.tags;
+        savevars{end+1} = 'tags';
+    end
     
     %% Get dFF and recording values
     
-    savevars = [savevars {'ncells', 'nframes', 'neuropil', 'dff', 'centroid', 'masks'}];
+    savevars = [savevars {'framerate', 'ncells', 'nframes', 'neuropil',...
+                          'dff', 'centroid', 'masks'}];
     if p.raw, savevars{end+1} = 'raw'; end
     if p.f0, savevars{end+1} = 'f0'; end
     
     % Load info file and get framerate
-    info = pipe.metadata(sbxPath(mouse, date, run, 'sbx', 'server', p.server));
+    info = pipe.metadata(pipe.path(mouse, date, run, 'sbx', 'server', p.server));
     framerate = info.framerate;
     
     % Prep the output
     ncells = length(gd.cellsort) - 1;
     nframes = length(gd.cellsort(1).timecourse.dff_axon);
     neuropil = gd.cellsort(end).timecourse.dff_axon;
-    dff = zeros(ncells, nframes);
-    f0 = zeros(ncells, nframes);
-    raw = zeros(ncells, nframes);
+    dff = zeros(ncells, nframes, 'single');
+    f0 = zeros(ncells, nframes, 'single');
+    raw = zeros(ncells, nframes, 'single');
     centroid = zeros(ncells, 2);
     
     if ncells > 255
@@ -98,7 +114,7 @@ function writeSimpcell(mouse, date, run, server, varargin)
     
     %% Running, brain motion, and pupil
     
-    savevars = [savevars {'running', 'brainmotion', 'pupil'}];
+    savevars = [savevars {'running', 'brainmotion'}];
     
     % Load the rotary encoder running data, if possible
     running = [];
@@ -116,9 +132,12 @@ function writeSimpcell(mouse, date, run, server, varargin)
         end
     end
     
-    brainmotion = pipe.proc.brainposition(mouse, date, run, server);
+    brainmotion = pipe.proc.brainposition(mouse, date, run, p.server);
     
-    [pupil_dx, pupil_dy, pupil_sum, pupil] = sbxPupil(mouse, date, run, server);
+    if p.pupil
+        savevars = [savevars, 'pupil'];
+        [pupil_dx, pupil_dy, pupil_sum, pupil] = sbxPupil(mouse, date, run, p.server);
+    end
     
     
     %% Deconvolution
@@ -126,15 +145,41 @@ function writeSimpcell(mouse, date, run, server, varargin)
     if p.deconvolved
         savevars{end+1} = 'deconvolved';
         
-        decon = pipe.load(mouse, date, run, 'decon');
-        if isempty(decon)
+        decon_path = pipe.path(mouse, date, run, 'decon', p.server);
+        if isempty(decon_path)
             display('Deconvolving signals...')
             deconvolved = pipe.proc.deconvolve(dff);
             dpath = pipe.path(mouse, date, run, 'decon', 'estimate', true);
             save(dpath, 'deconvolved');
         else
+            decon = load(decon_path, '-mat');
             deconvolved = decon.deconvolved;
         end
+    end
+    
+    %% Behavioral data
+    
+    ons = pipe.io.trial_times(mouse, date, run, p.server);
+    
+    if p.training && (isempty(ons) || ~isfield(ons, 'onsets'))
+        error('Behavioral data from Monkeylogic not found.');
+    end
+    
+    if ~isempty(ons) && isfield(ons, 'onsets')
+        savevars = [savevars {'onsets', 'offsets', 'licking', 'ensure', 'quinine', 'condition', 'trialerror', 'codes'}];
+        
+        onsets = ons.onsets;
+        offsets = ons.offsets;
+        licking = ons.licking;
+        ensure = ons.ensure;
+        quinine = ons.quinine;
+        condition = ons.condition;
+        trialerror = ons.trialerror;
+        codes = ons.codes;
+    elseif ~isempty(ons)
+        savevars = [savevars {'licking'}];
+        
+        licking = ons.licking;
     end
     
     %% Save

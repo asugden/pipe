@@ -1,4 +1,4 @@
-function nidaq = sbxEphys(mouse, date, run, server, rig, interpolate2p)
+function nidaq = read_sbxephys(mouse, date, run, server, rig, interpolate2p)
     % The number of Ephys channels is not saved anywhere, so we have to
     % guess. The lab has always used 7, 8, or 9 channels. So, we will
     % estimate from that.

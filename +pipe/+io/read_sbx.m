@@ -1,4 +1,4 @@
-function x = sbxRead(path, k, N, pmt, optolevel)
+function x = read_sbx(path, k, N, pmt, optolevel)
     % BEWARE: Corrected from 0-indexed to 1-indexed, both for k and pmt
     % Reads from frame k to k + (N - 1) in file fname
     % path  - the file path to .sbx file (e.g., 'xx0_000_001')

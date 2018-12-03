@@ -1,4 +1,4 @@
-function out = readTiff(path, newType)
+function out = read_tiff(path, newType)
 %READTIFF Reads TIFF file 
 
     if ~exist(path), error('Image file not found'); end

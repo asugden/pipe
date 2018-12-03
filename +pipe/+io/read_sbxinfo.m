@@ -1,4 +1,4 @@
-function nginfo = sbxInfo(path, force)
+function nginfo = read_sbxinfo(path, force)
 %get the global info variable
 % WARNING: corrects the number of channels for .sbxreg and .sbxclean files
 

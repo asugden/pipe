@@ -1,4 +1,4 @@
-function out = sbxOnsets(mouse, date, run, server, force, allowrunthrough, interpolate2p, ttlv, miniti)
+function out = trial_times(mouse, date, run, server, force, allowrunthrough, interpolate2p, ttlv, miniti)
     % Return the onset times and codes of monkeylogic stimuli for a
     % particular mouse, date, and run.
     
@@ -29,7 +29,7 @@ function out = sbxOnsets(mouse, date, run, server, force, allowrunthrough, inter
     end
 
     % Load nidaq data
-    nidaq = pipe.io.sbxEphys(mouse, date, run, server, [], interpolate2p);
+    nidaq = pipe.io.read_sbxephys(mouse, date, run, server, [], interpolate2p);
     nframes = nidaq.nframes;
 
     % Get the timing of monitor frames

@@ -1,4 +1,4 @@
-function success = writeTiff(array, filename, typestr)
+function success = write_tiff(array, filename, typestr)
 %WRITETIFF Writes array as TIFF file
 %
 %   Uses ImageJ code to do write
