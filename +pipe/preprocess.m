@@ -68,7 +68,7 @@ function preprocess(mouse, date, varargin)
     addOptional(p, 'refsize', 500, @isnumeric);  % Set the number of frames from which we make the reference
     addOptional(p, 'refoffset', 500, @isnumeric);  % The offset in frames for the reference image, accounts for weirdness in the first few frames
     addOptional(p, 'refstationary', false);  % Use period of immobility equal to refsize for making target
-    addOptional(p, 'pre_register', false, @isboolean);  % If true and affine aligning, register with dft prior to affine aligning
+    addOptional(p, 'pre_register', false);  % If true and affine aligning, register with dft prior to affine aligning
     addOptional(p, 'align_tbin_s', 1, @isnumeric);  % How many seconds to bin in time for affine alignment only (DFT is every frame)
     addOptional(p, 'align_highpass_sigma', 5, @isnumeric);  % Size of the Gaussian blur to be subtracted from a downsampled image
     addOptional(p, 'align_target_rounds', 3, @isnumeric);  % Number of times to dft align the registration targets
@@ -82,6 +82,7 @@ function preprocess(mouse, date, varargin)
     
     % Used by job system- do not set.
     addOptional(p, 'run_as_job', false);
+    addOptional(p, 'has_mousedate', true);
 
     if length(varargin) == 1 && iscell(varargin{1}), varargin = varargin{1}; end
     parse(p, varargin{:});
