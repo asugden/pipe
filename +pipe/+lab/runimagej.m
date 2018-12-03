@@ -31,6 +31,8 @@ function runimagej()
             ijroot = 'D:\twophoton_data\2photon\scan\pipeline\minimal_ImageJ';
         elseif strcmpi(hn, 'santiago')
             ijroot = 'D:\Analysis_scripts\pipeline\minimal_ImageJ';
+        elseif strcmpi(hn, 'atlas')
+            ijroot = 'E:\Analysis_scripts\pipeline\minimal_ImageJ';
         end
             
         javaaddpath(fullfile(ijroot,'ij.jar'));
