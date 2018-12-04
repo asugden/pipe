@@ -15,7 +15,7 @@ function [noise_, varargout] = dffnoise(dff)
     [xd, yd] = pipe.proc.dffhistogram(dff);
     
     % And smooth to find the peak
-    ys = smooth(yd, length(yd)/40.0);
+    ys = pipe.proc.smooth(yd, length(yd)/40.0);
     [maxy, maxi] = max(ys);
     mu_ = xd(maxi);
         
