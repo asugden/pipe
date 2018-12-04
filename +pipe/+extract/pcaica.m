@@ -84,7 +84,7 @@ function icaguidata = pcaica(mov, varargin)
 
     % Make the legacy icaguidata variable
     icaguidata.movm = meanimg;
-    icaguidata.movcorr = pipe.extract.crosscorr_image(bint(mov, 100));
+    icaguidata.movcorr = pipe.extract.crosscorr_image(pipe.proc.bint(mov, 100));
     icaguidata.snrsort = sortmatrix(included, 1);
     for i = 1:length(sortorder)
         tr = sortorder(i);
