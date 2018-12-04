@@ -21,7 +21,7 @@ function firstlast_movie(path, n, pmt, varargin)
         f500 = pipe.imread(path, p.startframe, n, pmt, p.optolevel, 'register', true);
         l500 = pipe.imread(path, info.max_idx + 1 - n, n, pmt, p.optolevel, 'register', true);
 
-        pipe.write_tiff(cat(3, f500, l500), spath, class(f500));
+        pipe.io.write_tiff(cat(3, f500, l500), spath, class(f500));
     end
 end
 

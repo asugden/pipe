@@ -20,7 +20,8 @@ function cellclick_send_to_server(mouse, date, runs, icapath, force, axon, serve
     
     datapath = pipe.lab.webserver();
     
-    mdp = sprintf('%s%s_%s_%03i%s\\', datapath, mouse, date, icarun, nmftext);
+    if ischar(date), date = str2num(date); end
+    mdp = sprintf('%s%s_%i_%03i%s\\', datapath, mouse, date, icarun, nmftext);
     zeropos = 5;  % height above zero relative to below
     minim = 20;  % Minimum image width
     erosions = [1.0, 0.85, 0.7, 0.5, 0.35, 0.2, 0.12, 0.05];
