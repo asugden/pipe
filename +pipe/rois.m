@@ -68,8 +68,8 @@ function icaguidata = rois(movpaths, savepath, edges, varargin)
                 frames = pipe.imread(path, (c-1)*p.chunksize + 1, p.chunksize, ...
                     p.pmt, p.optolevel, 'register', true);
                 frames = frames(edges(3):end-edges(4), edges(1):end-edges(2), :);
-                frames = binxy(frames, p.downsample_xy);
-                movpart{c} = bint(frames, p.downsample_t);
+                frames = pipe.proc.binxy(frames, p.downsample_xy);
+                movpart{c} = pipe.proc.bint(frames, p.downsample_t);
             end
             
             comb{r} = movpart;
