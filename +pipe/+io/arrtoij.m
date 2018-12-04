@@ -11,6 +11,8 @@ function imp = arrtoij(array, typestr, name)
     arraytype = class(array);
     if nargin < 2 || isempty(typestr), typestr = class(array); end  
     
+    pipe.lab.runimagej();
+    
     [height, width, nframes, nplanes] = size(array);
 
     %% Handle different bit depths and RGB images
