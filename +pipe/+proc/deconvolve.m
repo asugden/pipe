@@ -59,9 +59,10 @@ function deconvolved = deconvolve(dffs)
 
     %% Account for nanrows
     
+    dffs = double(dffs);
     ncells = size(dffs, 1);
     nframes = size(dffs, 2);
-    deconvolved = NaN(nframes, ntimes);
+    deconvolved = NaN(ncells, nframes);
     
     nanrows = zeros(1, ncells);
     for c = 1:size(dffs, 1)

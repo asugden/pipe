@@ -66,7 +66,7 @@ function mov = imread(path, k, N, pmt, optolevel, varargin)
     %% Read file
     
     if strcmpi(p.mtype, 'sbx') || (length(ext) > 3 && strcmpi(ext(1:4), '.sbx'))
-        mov = pipe.io.sbxRead(path, k, N, pmt, optolevel);
+        mov = pipe.io.read_sbx(path, k, N, pmt, optolevel);
     else
         error('Cannot read movie type.');
     end

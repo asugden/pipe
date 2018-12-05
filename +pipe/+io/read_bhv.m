@@ -1,4 +1,4 @@
-function BHV = readBhv(path)
+function BHV = read_bhv(path)
 %BHVREAD Modified from the original to remove dependencies
 
 % SYNTAX:

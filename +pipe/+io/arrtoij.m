@@ -1,4 +1,4 @@
-function imp = arrtoij(array, name)
+function imp = arrtoij(array, typestr, name)
     %IJARRAY2PLUS Converts MATLAB array to ImageJ ImagePlus object
     %   imp = ijarray2plus(array, typestr)
     %   array size [nRows,nCols,nFrames,nPlanes]
@@ -10,6 +10,8 @@ function imp = arrtoij(array, name)
     if nargin < 3, name = 'stack'; end
     arraytype = class(array);
     if nargin < 2 || isempty(typestr), typestr = class(array); end  
+    
+    pipe.lab.runimagej();
     
     [height, width, nframes, nplanes] = size(array);
 

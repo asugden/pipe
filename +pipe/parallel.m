@@ -12,6 +12,7 @@ function [pool, sz] = parallel(varargin)
     if isempty(pool)
         matlabver = version('-release');
         matlabver = str2num(matlabver(1:end-1));
+        hostname = pipe.misc.hostname();
         if matlabver >= 2015
             if strcmpi(hostname, 'megatron')
                 sz = 10;

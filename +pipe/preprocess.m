@@ -13,7 +13,8 @@ function preprocess(mouse, date, varargin)
     % Most important variables
     addOptional(p, 'sbxpaths', []);  % If set to a cell array of paths, mouse and date will be ignored
     addOptional(p, 'target', []);  % Target run to align to, default runs(1)
-    addOptional(p, 'job', false);  % Set to true if run as a batch, blocks user interaction
+    addOptional(p, 'job', true);  % Set to true to run as a job, set to false to run immediately.
+    addOptional(p, 'priority', 'med');  % Set the priority to be low, medium, or high. Default is medium.
     addOptional(p, 'server', []);  % Add in the server name as a string
     % addOptional(p, 'pupil', false);  % Extract pupil diameter if possible
     addOptional(p, 'runs', []);  % Defaults to all runs in the directory
@@ -67,7 +68,7 @@ function preprocess(mouse, date, varargin)
     addOptional(p, 'refsize', 500, @isnumeric);  % Set the number of frames from which we make the reference
     addOptional(p, 'refoffset', 500, @isnumeric);  % The offset in frames for the reference image, accounts for weirdness in the first few frames
     addOptional(p, 'refstationary', false);  % Use period of immobility equal to refsize for making target
-    addOptional(p, 'pre_register', false, @isboolean);  % If true and affine aligning, register with dft prior to affine aligning
+    addOptional(p, 'pre_register', false);  % If true and affine aligning, register with dft prior to affine aligning
     addOptional(p, 'align_tbin_s', 1, @isnumeric);  % How many seconds to bin in time for affine alignment only (DFT is every frame)
     addOptional(p, 'align_highpass_sigma', 5, @isnumeric);  % Size of the Gaussian blur to be subtracted from a downsampled image
     addOptional(p, 'align_target_rounds', 3, @isnumeric);  % Number of times to dft align the registration targets
@@ -78,6 +79,10 @@ function preprocess(mouse, date, varargin)
     addOptional(p, 'align_pmt', [], @isnumeric);  % Which PMT to use for registration, 1-green, 2-red
     addOptional(p, 'align_downsample_xy', [], @isnumeric);  % Pixels to downsample in xy, will be set to downsample_xy if empty
     % addOptional(p, 'align_from_pcaclean', false);  %
+    
+    % Used by job system- do not set.
+    addOptional(p, 'run_as_job', false);
+    addOptional(p, 'has_mousedate', true);
 
     if length(varargin) == 1 && iscell(varargin{1}), varargin = varargin{1}; end
     parse(p, varargin{:});
@@ -86,6 +91,10 @@ function preprocess(mouse, date, varargin)
     %% Clean up inputs based on data about the file and force into a list 
     %  of .sbx files (so that this function can easily be duplicated for
     %  paths only
+    
+    if ~isempty(date) && ischar(date)
+        date = str2num(date);
+    end
     
     if ~isempty(p.sbxpaths)
         sbxpaths = p.sbxpaths;
@@ -97,7 +106,7 @@ function preprocess(mouse, date, varargin)
 
         sbxpaths = {};
         for r = 1:length(runs)
-            sbxpaths{end+1} = pipe.path(mouse, date, runs(r), 'sbx', 'server', p.server);
+            sbxpaths{end+1} = pipe.path(mouse, date, runs(r), 'sbx', p.server);
         end
         p.has_mousedate = true;
     end
@@ -109,11 +118,10 @@ function preprocess(mouse, date, varargin)
     info = pipe.metadata(sbxpaths{1});
 
     % Set the target and account for overwriting
-    if isempty(p.target), p.target = sbxpaths{1}; end
+    if isempty(p.target), p.target = 1; end
     if isempty(p.edges), p.edges = pipe.lab.badedges(sbxpaths{1}); end
     if isempty(p.align_pmt), p.align_pmt = p.pmt; end
     if isempty(p.align_edges), p.align_edges = p.edges; end
-    if isempty(p.align_downsample_xy), p.align_downsample_xy = p.downsample_xy; end    
     
     % Set the correct sizes based on the objective being used
     if ~isempty(p.objective)
@@ -128,6 +136,7 @@ function preprocess(mouse, date, varargin)
         if isempty(p.maxarea), p.maxarea = maxa; end
         if isempty(p.downsample_xy), p.downsample_xy = dxy; end
     end
+    if isempty(p.align_downsample_xy), p.align_downsample_xy = p.downsample_xy; end    
     
     % Set the correct chunk size and downsampling based on framerate
     if info.framerate > 20, p.downsample_t = p.downsample_t*2; end
@@ -144,12 +153,44 @@ function preprocess(mouse, date, varargin)
         end
     end 
     
+    %% Save job if necessary
+    
+    if p.job && ~p.run_as_job
+        % Convert parameters to struct
+        pars = {};
+        fns = fieldnames(p);
+        for i = 1:length(fns)
+            if ~strcmp(fns{i}, 'runs') && ~strcmp(fns{i}, 'priority') && ~strcmp(fns{i}, 'pupil')
+                pars{end + 1} = fns{i};
+                pars{end + 1} = getfield(p, fns{i});
+            end
+        end
+
+        % And save
+        job_path = pipe.lab.jobdb([], p.priority);
+        job = 'preprocess';
+        time = timestamp();
+        user = getenv('username');
+        extra = '';
+        if ~isempty(mouse)
+            extra = [extra '_' mouse];
+        end
+        if ~isempty(date)
+            extra = [extra '_' num2str(date)];
+        end
+
+        save(sprintf('%s\\%s_%s_%s%s.mat', job_path, ...
+            timestamp(), user, job, extra), 'mouse', 'date', 'job', ...
+            'time', 'user', 'pars');
+        return;
+    end
+    
     %% Align
     
     % if p.nomovetarget  % Use period of immobility to make target
     %     [p.refoffset, p.refsize] = sbxNoMoveTarget(mouse, date, p.target, p.refsize);
     % end
-    
+        
     pipe.align(sbxpaths, 'force', p.force, 'optotune_level', p.optotune_level, ...
         'edges', p.align_edges, 'pmt', p.align_pmt, 'target', p.target, ...
         'refsize', p.refsize, 'refoffset', p.refoffset, 'target_rounds', p.align_target_rounds, ...
@@ -194,38 +235,41 @@ function preprocess(mouse, date, varargin)
     
     if ~strcmpi(p.extraction, 'none') 
         savepath = sprintf('%s.ica', path(1:end-4));
-            
-        icaguidata = sbxExtractROIs(movpaths, savepath, p.edges, 'type', p.extraction, 'force', p.force, ...
-            'axons', p.axons, 'downsample_t', p.downsample_t, 'downsample_xy', p.downsample_xy, ...
-            'chunksize', chunksize, 'npcs', p.npcs, 'temporal_weight', p.temporal_weight, ...
-            'smoothing_width', p.smoothing_width, 'spatial_threshold_sd', p.spatial_threshold_sd, ...
-            'cellhalfwidth', p.cellhalfwidth, 'mergethreshold', p.mergethreshold, 'patchsize', p.patchsize, 'ncomponents', p.ncomponents, ...
-            'minarea', p.minarea, 'maxarea', p.maxarea, 'overlap', p.overlap, 'crosscorr', p.crosscorr,'firstpctokeep',p.firstpctokeep);
-
-        icaguidata.pars = p;
-        save(savepath, 'icaguidata', '-v7.3');
         
+        if ~exist(savepath) || p.force
+            icaguidata = pipe.rois(sbxpaths, savepath, p.edges, 'pmt', p.pmt, 'optolevel', p.optotune_level, ...
+                'type', p.extraction, 'force', p.force, ...
+                'axons', p.axons, 'downsample_t', p.downsample_t, 'downsample_xy', p.downsample_xy, ...
+                'chunksize', chunksize, 'npcs', p.npcs, 'temporal_weight', p.temporal_weight, ...
+                'smoothing_width', p.smoothing_width, 'spatial_threshold_sd', p.spatial_threshold_sd, ...
+                'cellhalfwidth', p.cellhalfwidth, 'mergethreshold', p.mergethreshold, 'patchsize', p.patchsize, 'ncomponents', p.ncomponents, ...
+                'minarea', p.minarea, 'maxarea', p.maxarea, 'overlap', p.overlap, 'crosscorr', p.crosscorr,'firstpctokeep',p.firstpctokeep);
+
+            icaguidata.pars = p;
+            save(savepath, 'icaguidata', '-v7.3');
+        end
+            
         % Make it clickable by the javascript functions
-        processForJavascript(mouse, date, runs, p.force, p.axons, p.server);
+        pipe.extract.cellclick_send_to_server(mouse, date, runs, savepath, p.force, p.axons, p.server);
     end
 
     %% Follow-up with optional images for checking
     
-    if p.pupil
-        if ~p.job
-            sbxPupilMasks(mouse, date, runs, p.server);
-        end
-        
-        sbxPupils(mouse, date, runs, p.server);
-    end
+%     if p.pupil
+%         if ~p.job
+%             sbxPupilMasks(mouse, date, runs, p.server);
+%         end
+%         
+%         sbxPupils(mouse, date, runs, p.server);
+%     end
     
     if p.testimages
-        for r = 1:length(runs)
-            sbxFirstLast(mouse, date, runs(r), p.refsize, p.pmt, 'server', p.server);
-            sbxStimulusTiff(mouse, date, runs(r), p.pmt, p.server);
+        for r = 1:length(sbxpaths)
+            pipe.extract.firstlast_movie(sbxpaths{r}, p.refsize, p.pmt);
+            pipe.extract.stimulus_tiff(mouse, date, runs(r), p.pmt, p.server);
         end
 
-        sbxAlignAffineTest(mouse, date, runs, p.refpmt, p.server);
+        % sbxAlignAffineTest(mouse, date, runs, p.refpmt, p.server);
     end
 end
 

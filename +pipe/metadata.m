@@ -6,7 +6,7 @@ function info = metadata(path, mtype)
     % Find file type
     [~, ~, ext] = fileparts(path);
     if strcmpi(mtype, 'sbx') || (length(ext) > 3 && strcmpi(ext(1:4), '.sbx'))
-        info = pipe.io.sbxInfo(path);
+        info = pipe.io.read_sbxinfo(path);
     else
         error('Cannot read metadata for movie type.');
     end

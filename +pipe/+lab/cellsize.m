@@ -24,6 +24,8 @@ function [cellhalfwidth, minarea, maxarea, downsample_xy] = ...
         maxarea = round((zoom/6.7)*2000);
         downsample_xy = 4;
     else
+        error('Objective not found.');
+        
         minarea = round(cellhalfwidth*2.8);
         maxarea = round(cellhalfwidth*200);
         downsample_xy = 2;
