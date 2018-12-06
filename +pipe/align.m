@@ -206,7 +206,8 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
                 % Get the current parallel pool or initailize
                 pipe.parallel();
                 parfor c = 1:nchunks
-                    ootrans{c} = pipe.reg.postdft(path, (c-1)*p.chunksize, ...
+                    start_frame = (c - 1)*p.chunksize + 1;
+                    ootrans{c} = pipe.reg.postdft(path, start_frame, ...
                         p.chunksize, dftref, ootform{c}, p.pmt, ...
                         p.optotune_level, p.edges);
                 end
