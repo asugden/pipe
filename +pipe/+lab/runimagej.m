@@ -9,7 +9,7 @@ function runimagej()
     persistent imagej_loaded
     if isempty(imagej_loaded)
         %% Get hostname
-        hn = pipe.misc.hostname()
+        hn = pipe.misc.hostname();
 
         %% Get the Fiji directory
         % fiji_directory = fileparts(fileparts(mfilename('fullpath')));
