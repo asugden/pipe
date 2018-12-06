@@ -107,6 +107,9 @@ function preprocess(mouse, date, varargin)
         sbxpaths = {};
         for r = 1:length(runs)
             sbxpaths{end+1} = pipe.path(mouse, date, runs(r), 'sbx', p.server);
+            if ~exist(sbxpaths{end}, 'file')
+                error('Unable to locate sbx file: %s - %i - %i', mouse, date, runs(r));
+            end
         end
         p.has_mousedate = true;
     end
@@ -214,7 +217,6 @@ function preprocess(mouse, date, varargin)
     
     if p.sbxreg
         for r = 1:length(sbxpaths)
-            path = sbxpaths{r};
             pipe.reg.save(sbxpaths{r}, 'force', p.force, 'chunksize', p.chunksize);
         end        
     end    
@@ -233,10 +235,11 @@ function preprocess(mouse, date, varargin)
     
     %% Extract ROIs
     
-    if ~strcmpi(p.extraction, 'none') 
-        savepath = sprintf('%s.ica', path(1:end-4));
+    if ~strcmpi(p.extraction, 'none')
+        last_sbxpath = sbxpaths{end};
+        savepath = sprintf('%s.ica', last_sbxpath(1:end-4));
         
-        if ~exist(savepath) || p.force
+        if ~exist(savepath, 'file') || p.force
             icaguidata = pipe.rois(sbxpaths, savepath, p.edges, 'pmt', p.pmt, 'optolevel', p.optotune_level, ...
                 'type', p.extraction, 'force', p.force, ...
                 'axons', p.axons, 'downsample_t', p.downsample_t, 'downsample_xy', p.downsample_xy, ...
