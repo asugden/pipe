@@ -1,4 +1,4 @@
-function backup(user, mouse, dates, server, btype, overwrite)
+function backup(user, mouse, dates, server, btype, overwrite, verbose)
 %BACKUP will backup either raw or processed data to R or anastasia
 %   btype is the backup type, can be empty (copy to R), 'raw' (copy raw to 
 %   R), 'processed' (copy processed to R), 'anastasia' (copy all to
@@ -8,6 +8,7 @@ function backup(user, mouse, dates, server, btype, overwrite)
     if nargin < 3 || isempty(dates), dates = pipe.lab.dates(mouse, server); end
     if nargin < 5, btype = 'raw'; end
     if nargin < 6, overwrite = false; end
+    if nargin < 7, verbose = true; end
 
     rbase = 'R:\Andermann_Lab\active\2photon\';
     nasbase = '\\anastasia\data\2p\';
@@ -16,27 +17,27 @@ function backup(user, mouse, dates, server, btype, overwrite)
     switch btype
         case 'raw'
             archivebase = fullfile(rbase, user);
-            rawData(mouse, dates, server, archivebase, overwrite);
+            rawData(mouse, dates, server, archivebase, overwrite, verbose);
         case 'processed'
             archivebase = fullfile(rbase, user);
-            processedData(mouse, dates, server, archivebase, overwrite);
+            processedData(mouse, dates, server, archivebase, overwrite, verbose);
         case 'anastasia'
             archivebase = fullfile(nasbase, user);
-            rawData(mouse, dates, server, archivebase, overwrite);
-            processedData(mouse, dates, server, archivebase, overwrite);
+            rawData(mouse, dates, server, archivebase, overwrite, verbose);
+            processedData(mouse, dates, server, archivebase, overwrite, verbose);
         case 'full'
             archivebase = fullfile(rbase, user);
-            rawData(mouse, dates, server, archivebase, overwrite);
-            processedData(mouse, dates, server, archivebase, overwrite);
+            rawData(mouse, dates, server, archivebase, overwrite, verbose);
+            processedData(mouse, dates, server, archivebase, overwrite, verbose);
             archivebase = fullfile(nasbase, user);
-            rawData(mouse, dates, server, archivebase, overwrite);
-            processedData(mouse, dates, server, archivebase, overwrite);
+            rawData(mouse, dates, server, archivebase, overwrite, verbose);
+            processedData(mouse, dates, server, archivebase, overwrite, verbose);
     end
 end
 
 
 
-function rawData(mouse, dates, server, archivebase, overwrite)
+function rawData(mouse, dates, server, archivebase, overwrite, verbose)
 %BACKUPRAWDATA Copy raw data to R, renaming files to match their enclosing
 %   mouse/date/run if necessary
 %   Does not overwrite unless overwrite flag is set
@@ -52,81 +53,92 @@ function rawData(mouse, dates, server, archivebase, overwrite)
     % Set defaults
     if nargin < 4, server = []; end
     if nargin < 3 || isempty(dates), dates = pipe.lab.dates(mouse, server); end
-    if nargin < 6, overwrite = false; end
+    if nargin < 5, overwrite = false; end
+    if nargin < 6, verbose = true; end
     
-    if ~exist(fullfile(archivebase, upper(mouse)))
+    if ~exist(fullfile(archivebase, upper(mouse)), 'dir')
         mkdir(fullfile(archivebase, upper(mouse)));
     end
    
     % Iterate over dates
     for date = dates
         datebase = fullfile(archivebase, upper(mouse), sprintf('%6i_%s', date, mouse));        
-        if ~exist(datebase), mkdir(datebase); end
+        if ~exist(datebase, 'dir'), mkdir(datebase); end
         
         runs = pipe.lab.runs(mouse, date, server);
         for run = runs
-            fprintf('Moving raw data to %s: %s %6i %03i\n', archivebase, mouse, date, run); 
+            fprintf('Moving raw data to %s: %s %6i %03i\n', archivebase, mouse, date, run);
             destbase = fullfile(datebase, sprintf('%6i_%s_%03i', date, mouse, run));
-            if ~exist(destbase), mkdir(destbase); end
+            if ~exist(destbase, 'dir'), mkdir(destbase); end
             
             % SBX and INFO files
             sbx = pipe.path(mouse, date, run, 'sbx', server);
             if isempty(sbx)
-                fprintf('  WARNING: SBX file not found for %s %6i %03i\n', mouse, date, run);
+                if verbose
+                    fprintf('  WARNING: SBX file not found for %s %6i %03i\n', mouse, date, run);
+                end
             else
                 [srcbase, name, ext] = fileparts(sbx);
                 newname = sprintf('%s_%6i_%03i.sbx', mouse, date, run);
-                copyWithChecks('sbx', srcbase, destbase, [name ext], newname, overwrite);
+                copyWithChecks('sbx', srcbase, destbase, [name ext], newname, overwrite, verbose);
 
                 newname = sprintf('%s_%6i_%03i.mat', mouse, date, run);
-                copyWithChecks('info', srcbase, destbase, [name '.mat'], newname, overwrite);
+                copyWithChecks('info', srcbase, destbase, [name '.mat'], newname, overwrite, verbose);
             end
                 
             % EPHYS file
             ephys = pipe.path(mouse, date, run, 'ephys', server);
             if isempty(ephys)
-                fprintf('  WARNING: EPHYS file not found for %s %6i %03i\n', mouse, date, run);
+                if verbose
+                    fprintf('  WARNING: EPHYS file not found for %s %6i %03i\n', mouse, date, run);
+                end
             else
                 [srcbase, name, ext] = fileparts(ephys);
                 newname = sprintf('%s_%6i_%03i.ephys', mouse, date, run);
-                copyWithChecks('ephys', srcbase, destbase, [name ext], newname, overwrite);
+                copyWithChecks('ephys', srcbase, destbase, [name ext], newname, overwrite, verbose);
             end
             
             % EYE file
             eye = pipe.path(mouse, date, run, 'pupil', server);
             if isempty(eye)
-                fprintf('  WARNING: EYE file not found for %s %6i %03i\n', mouse, date, run);
+                if verbose
+                    fprintf('  WARNING: EYE file not found for %s %6i %03i\n', mouse, date, run);
+                end
             else
                 [srcbase, name, ext] = fileparts(eye);
                 newname = sprintf('%s_%6i_%03i_eye.mat', mouse, date, run);
-                copyWithChecks('eye', srcbase, destbase, [name ext], newname, overwrite);
+                copyWithChecks('eye', srcbase, destbase, [name ext], newname, overwrite, verbose);
             end
             
             % QUADRATURE file
             quad = pipe.path(mouse, date, run, 'quad', server);
             if isempty(quad)
-                fprintf('  WARNING: QUADRATURE file not found for %s %6i %03i\n', mouse, date, run);
+                if verbose
+                    fprintf('  WARNING: QUADRATURE file not found for %s %6i %03i\n', mouse, date, run);
+                end
             else
                 [srcbase, name, ext] = fileparts(quad);
                 newname = sprintf('%s_%6i_%03i_quadrature.mat', mouse, date, run);
-                copyWithChecks('quadrature', srcbase, destbase, [name ext], newname, overwrite);
+                copyWithChecks('quadrature', srcbase, destbase, [name ext], newname, overwrite, verbose);
             end
             
             % BHV file
             bhv = pipe.path(mouse, date, run, 'bhv', server);
             if isempty(bhv)
-                fprintf('  WARNING: BHV file not found for %s %6i %03i\n', mouse, date, run);
+                if verbose
+                    fprintf('  WARNING: BHV file not found for %s %6i %03i\n', mouse, date, run);
+                end
             else
                 [srcbase, name, ext] = fileparts(bhv);
                 newname = sprintf('%s_%6i_%03i.bhv', mouse, date, run);
-                copyWithChecks('bhv', srcbase, destbase, [name ext], newname, overwrite);
+                copyWithChecks('bhv', srcbase, destbase, [name ext], newname, overwrite, verbose);
             end
         end
     end
 end
 
 
-function processedData(mouse, dates, server, archivebase, overwrite)
+function processedData(mouse, dates, server, archivebase, overwrite, verbose)
 %BACKUPRAWDATA Copy raw data to R, renaming files to match their enclosing
 %   mouse/date/run if necessary
 %   Does not overwrite unless overwrite flag is set
@@ -153,45 +165,46 @@ function processedData(mouse, dates, server, archivebase, overwrite)
     if nargin < 3, server = []; end
     if nargin < 2 || isempty(dates), dates = pipe.lab.dates(mouse, server); end
     if nargin < 5, overwrite = false; end
+    if nargin < 6, verbose = true; end
     
-    if ~exist(fullfile(archivebase, upper(mouse)))
+    if ~exist(fullfile(archivebase, upper(mouse)), 'dir')
         mkdir(fullfile(archivebase, upper(mouse)));
     end
    
     % Iterate over dates
     for date = dates
         datebase = fullfile(archivebase, upper(mouse), sprintf('%6i_%s', date, mouse));        
-        if ~exist(datebase), mkdir(datebase); end
+        if ~exist(datebase, 'dir'), mkdir(datebase); end
         
         copiedglm = false;
         runs = pipe.lab.runs(mouse, date, server);
         for run = runs
             fprintf('Moving processed data to %s: %s %6i %03i\n', archivebase, mouse, date, run); 
             destbase = fullfile(datebase, sprintf('%6i_%s_%03i', date, mouse, run));
-            if ~exist(destbase), mkdir(destbase); end
+            if ~exist(destbase, 'dir'), mkdir(destbase); end
             
             for b = 1:length(backups)
                 path = pipe.path(mouse, date, run, backups{b}, server);
-                if ~isempty(path) && exist(path)
+                if ~isempty(path) && exist(path, 'file')
                     [srcbase, name, ext] = fileparts(path);
                     newname = sprintf('%s_%6i_%03i.%s', mouse, date, run, backups{b});
-                    copyWithChecks(backups{b}, srcbase, destbase, [name ext], newname, overwrite);
+                    copyWithChecks(backups{b}, srcbase, destbase, [name ext], newname, overwrite, verbose);
                 end
             end
             
             path = pipe.path(mouse, date, run, 'simpcell', server);
-            if ~isempty(path) && exist(path)
+            if ~isempty(path) && exist(path, 'file')
                 [srcbase, name, ext] = fileparts(path);
                 newname = sprintf('%s_%6i_%03i.simpcell', mouse, date, run);
-                copyWithChecks('simpcell', srcbase, datebase, [name ext], newname, overwrite);
+                copyWithChecks('simpcell', srcbase, datebase, [name ext], newname, overwrite, verbose);
             end
             
             if ~copiedglm
                 path = pipe.path(mouse, date, run, 'simpglm', server);
-                if ~isempty(path) && exist(path)
+                if ~isempty(path) && exist(path, 'file')
                     [srcbase, name, ext] = fileparts(path);
                     newname = sprintf('%s_%6i.simpglm', mouse, date);
-                    copyWithChecks('simpglm', srcbase, datebase, [name ext], newname, overwrite);
+                    copyWithChecks('simpglm', srcbase, datebase, [name ext], newname, overwrite, verbose);
                     copiedglm = true;
                 end
             end
@@ -200,7 +213,7 @@ function processedData(mouse, dates, server, archivebase, overwrite)
             if ~isempty(path)
                 [srcbase, name, ext] = fileparts(path);
                 newname = sprintf('%s_%6i_%03i_clicked.txt', mouse, date, run);
-                copyWithChecks('clicked', srcbase, destbase, [name ext], newname, overwrite);
+                copyWithChecks('clicked', srcbase, destbase, [name ext], newname, overwrite, verbose);
             end
         end
     end
@@ -217,13 +230,25 @@ function status = copyWithChecks(ftype, srcbase, destbase, src, dest, overwrite,
         fprintf('  WARNING: Changing %s name of %s to %s\n', upper(ftype), src, dest);
     end
 
+    do_copy = false;
     if overwrite || ~exist(fullfile(destbase, dest), 'file')
+        do_copy = true;
+    else % file exists and we don't want to force an overwrite
+        orig_attr = dir(fullfile(srcbase, src));
+        dest_attr = dir(fullfile(destbase, dest));
+        if orig_attr.bytes ~= dest_attr.bytes || orig_attr.datenum > dest_attr.datenum
+            do_copy = true;
+            fprintf('  UPDATED %s file %s\n', upper(ftype), src);
+        elseif verbose
+            fprintf('  SKIPPING %s file %s\n', upper(ftype), src);
+        end
+    end
+    
+    if do_copy
         status = copyfile(fullfile(srcbase, src), fullfile(destbase, dest));
         if status ~= 1
             error('STOPPING: could not copy %s file %s', upper(ftype), src);
         end
-    elseif verbose
-        fprintf('  SKIPPING %s file %s\n', upper(ftype), src);
     end
 end
 
