@@ -18,6 +18,7 @@ function mov = imread(path, k, N, pmt, optolevel, varargin)
 
     % Set to start at beginning if necessary
     if nargin < 2, k = 1; end
+    if k == 0, error('imread is 1-indexed, first frame must be >0'); end
     % Set in to read the whole file if unset
     if nargin < 3 || isempty(N) || N < 0, N = -1; end
     % Automatically set the PMT to be green
