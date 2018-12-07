@@ -5,17 +5,35 @@ function d = brainposition(mouse, date, run, server, fixed)
     if nargin < 5, fixed = 1; end
 
     d = [];
-    al = pipe.load(mouse, date, run, 'alignaffine', server);
-    if isempty(al), al = pipe.load(mouse, date, run, 'alignxy', server); end
-    if isempty(al), al = pipe.load(mouse, date, run, 'align', server); end
+    try
+        al = pipe.load(mouse, date, run, 'alignaffine', server);
+    catch
+        try
+            al = pipe.load(mouse, date, run, 'alignxy', server);
+        catch
+            al = pipe.load(mouse, date, run, 'align', server);
+        end
+    end
     if isempty(al), return; end
     
-    if fixed
-        dx = al.trans(:, 3);
-        dy = al.trans(:, 4);
+    if ~isfield(al, 'trans')
+        if isfield(al, 'T')
+            if fixed
+                dx = al.T(:, 1);
+                dy = al.T(:, 2);
+            else
+                dx = diff(al.T(:, 1));
+                dy = diff(al.T(:, 2));
+            end
+        end
     else
-        dx = diff(al.trans(:, 3));
-        dy = diff(al.trans(:, 4));
+        if fixed
+            dx = al.trans(:, 3);
+            dy = al.trans(:, 4);
+        else
+            dx = diff(al.trans(:, 3));
+            dy = diff(al.trans(:, 4));
+        end
     end
         
     if isfield(al, 'tform')
