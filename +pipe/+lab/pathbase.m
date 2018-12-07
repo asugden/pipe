@@ -11,13 +11,15 @@ function base = pathbase(server, jobdb_only)
     
     % Set base path depending on server
     if nargin < 1 || isempty(server) || strcmpi(hn, server)
-        if strcmp(hn, 'Megatron')
+        if strcmpi(hn, 'Megatron')
             base = 'D:\twophoton_data\2photon\scan\';
-        elseif strcmp(hn, 'Atlas')
+        elseif strcmpi(hn, 'Atlas')
             base = 'E:\twophoton_data\2photon\raw\';
-        elseif strcmp(hn, 'BeastMode')
+        elseif strcmpi(hn, 'beastmode')
             base = 'S:\twophoton_data\2photon\scan\';
-        elseif strcmp(hn, 'Sweetness')
+        elseif strcmpi(hn, 'beastbaby')
+            base = 'E:\twophoton_extra\2photon_extra\scan_extra\';
+        elseif strcmpi(hn, 'Sweetness')
             base = 'D:\2p_data\scan\';
         elseif strcmpi(hn, 'santiago')
             base = 'D:\2p_data\scan\';
@@ -35,8 +37,12 @@ function base = pathbase(server, jobdb_only)
             base = '\\megatron\2photon\scan\';
         elseif strcmpi(server, 'anastasia')
             base = '\\anastasia\data\2p\';
-        elseif strcmp(server, 'atlas')
+        elseif strcmpi(server, 'atlas')
             base = '\\atlas\twophoton_data\2photon\raw\';
+        elseif strcmpi(server, 'beastmode')
+            base = '\\beastmode\twophoton_data\2photon\scan\';
+        elseif strcmpi(server, 'beastbaby')
+            base = '\\beastmode\E\twophoton_extra\2photon_extra\scan_extra\';
         end
     end
 end
