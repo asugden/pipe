@@ -15,6 +15,8 @@ function out = trial_times(mouse, date, run, server, force, allowrunthrough, int
     if nargin < 6, allowrunthrough = false; end
     if nargin < 7, interpolate2p = false; end
     
+    if ischar(date), date = str2num(date); end
+    
     % Check if already created
     spath = pipe.path(mouse, date, run, 'onsets', server, 'estimate', true);
     if ~force && exist(spath)
@@ -33,7 +35,7 @@ function out = trial_times(mouse, date, run, server, force, allowrunthrough, int
     nframes = nidaq.nframes;
 
     % Get the timing of monitor frames
-    onset2p = monitorFrameOnsets(nidaq.frames2p, nidaq.timeStamps, nframes, allowrunthrough);
+    onset2p = monitorFrameOnsets(nidaq.frames2p, nidaq.timeStamps, nframes, allowrunthrough, sprintf('%s %i %03i', mouse, date, run));
     if isempty(onset2p)
         % This should only happen if there was a fatal error in ephys
         error(sprintf('Forced to quit in measurement of event onsets. Frames did not match for %s on %s run %i\n', mouse, date, run));
@@ -224,11 +226,12 @@ function [onsets, offsets] = ttledges(ttl, timestamps, mininterval, ttlv)
 end
 
 
-function framet = monitorFrameOnsets(nidaq, timestamps, nframes, allowrunthrough)
+function framet = monitorFrameOnsets(nidaq, timestamps, nframes, allowrunthrough, addtext)
 % getSbxMonitorFrames gets the timing of monitor frames given a nidaq
 % channel and nidaq timestamps that have been sorted.
 
     if nargin < 4, allowrunthrough = false; end
+    if nargin < 5, addtext = ''; end
 
     % Use simple thresholding to get frame onset times from the analog frame
     % signal recorded by the NiDAQ system:
@@ -254,8 +257,8 @@ function framet = monitorFrameOnsets(nidaq, timestamps, nframes, allowrunthrough
     if allowrunthrough && numel(framet) > nframes
         framet = framet(1:nframes);
     elseif numel(framet) < nframes - 2 || numel(framet) > nframes
-        w = warndlg(sprintf('Frame onsets measured by ephys, %i, do not match %i frames in movie', length(framet), nframes));
-        fprintf('Frame onsets measured by ephys, %i, do not match %i frames in movie', length(framet), nframes);
+        w = warndlg(sprintf('Frame onsets measured by ephys, %i, do not match %i frames in movie %s', length(framet), nframes, addtext));
+        fprintf('Frame onsets measured by ephys, %i, do not match %i frames in movie %s', length(framet), nframes, addtext);
         framet = [];
     end
 end
