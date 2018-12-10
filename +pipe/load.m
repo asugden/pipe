@@ -59,7 +59,7 @@ function out = load(mouse, date, run, ftype, server, varargin)
             if ~exist(path, 'file')
                 error('File not found');
             else
-                out = load(path, '-mat');
+                out = builtin('load', path, '-mat');
             end
     end
 end
