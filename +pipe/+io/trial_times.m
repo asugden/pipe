@@ -72,7 +72,7 @@ function out = trial_times(mouse, date, run, server, force, allowrunthrough, int
                     % matching movies
                     matched = true;
                     for k = 1:size(ml.TaskObject, 2)
-                        if ml.TaskObject{i, k} ~= ml.TaskObject{j, k}
+                        if strcmpi(ml.TaskObject{i, k}, ml.TaskObject{j, k})
                             matched = false;
                         end
                     end
