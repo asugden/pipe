@@ -5,6 +5,7 @@ function postprocess(mouse, date, runs, varargin)
     p = inputParser;
     % ---------------------------------------------------------------------
     % Most important variables
+    addOptional(p, 
     addOptional(p, 'extract_from_cleaned', true);  % Extract from PCA cleaned data if it exists
     
     if length(varargin) == 1 && iscell(varargin{1}), varargin = varargin{1}; end
