@@ -43,7 +43,7 @@ function write_simpcell(mouse, date, run, varargin)
     if ~p.force && exist(spath), return; end
     
     % Load cellsort file
-    gd = pipe.load(mouse, date, run, 'signals', p.server);
+    gd = pipe.load(mouse, date, run, 'signals', p.server, 'error', false);
     if isempty(gd)
         error(sprintf('Signals file not found for %s %s %03i', mouse, date, run));
     end
@@ -120,14 +120,14 @@ function write_simpcell(mouse, date, run, varargin)
     % Load the rotary encoder running data, if possible
     running = [];
     
-    quadfile = pipe.load(mouse, date, run, 'quad', p.server);
+    quadfile = pipe.load(mouse, date, run, 'quad', p.server, 'error', false);
     if ~isempty(quadfile)
         running = quadfile.quad_data;
         if length(running) == 2*nframes
             running = running(1:2:length(running)) + running(2:2:length(running));
         end
     else
-        quadfile = pipe.load(mouse, date, run, 'position', p.server);
+        quadfile = pipe.load(mouse, date, run, 'position', p.server, 'error', false);
         if ~isempty(quadfile)
             running = quadfile.position;
         end
