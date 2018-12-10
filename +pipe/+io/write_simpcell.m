@@ -150,7 +150,7 @@ function write_simpcell(mouse, date, run, varargin)
         if isempty(decon_path)
             display('Deconvolving signals...')
             deconvolved = pipe.proc.deconvolve(dff);
-            dpath = pipe.path(mouse, date, run, 'decon', 'estimate', true);
+            dpath = pipe.path(mouse, date, run, 'decon', p.server, 'estimate', true);
             save(dpath, 'deconvolved');
         else
             decon = load(decon_path, '-mat');
