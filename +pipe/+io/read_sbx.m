@@ -19,14 +19,20 @@ function x = read_sbx(path, k, N, pmt, optolevel)
     % Set to start at beginning if necessary
     % Note- it is which volume if optolevel is not empty
     if nargin < 2, k = 1; end
+    if k < 1, error('Start frame must be >= 1'); end
+    % Correct to 0-indexing for k
+    k = k - 1;
     % Set in to read the whole file if unset
-    if nargin < 3 || N < 0, N = info.nframes - (k - 1); end
+    if nargin < 3 || N < 0, N = info.nframes - k; end
     % Automatically set the PMT to be green
     if nargin < 4, pmt = 1; end
     % Read a larger chunk if optotune was used
     if nargin < 5, optolevel = []; end
+    if ~isempty(optolevel) && optolevel < 1
+        error('optolevel must be >= 1');
+    end
     % Make sure that we don't search beyond the end of the file
-    if N > info.nframes - (k - 1), N = info.nframes - (k - 1); end
+    if N > info.nframes - k, N = info.nframes - k; end
     % Check that optolevel isn't asking for something that doesn't exist
     if ~isempty(optolevel) && ~info.optotune_used
         error('Optotune was not used for this file.');
@@ -34,11 +40,8 @@ function x = read_sbx(path, k, N, pmt, optolevel)
 
     % Check if file can be opened
     if ~isfield(info, 'fid') || info.fid == 1
-        error(['Cannot read file' path]);
+        error(['Cannot read file: ' path]);
     end
-    
-    % Correct to 0-indexing for k
-    k = k - 1;
     
     if isempty(optolevel)
         try
@@ -50,15 +53,18 @@ function x = read_sbx(path, k, N, pmt, optolevel)
         end
     else
         optocycle = length(info.otwave);  % Length of the optotune cycle
+        if optolevel > optocycle
+            error('There are not that many optolevels.');
+        end
         k = k*optocycle + (optolevel - 1);  % Set the actual beginning in the file
-        if k > info.nframes
+        if k >= info.nframes
             x = [];
             return;
         end
         
         % Account for overrunning the number of frames
-        if k + N*optocycle > info.nframes
-            N = floor((info.max_idx - k)/optocycle);
+        if k + (N - 1)*optocycle >= info.nframes
+            N = floor((info.max_idx - k)/optocycle) + 1;
         end
         
         bufwidth = info.nchan*info.sz(2)*info.recordsPerBuffer;
