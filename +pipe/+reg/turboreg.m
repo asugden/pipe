@@ -104,7 +104,7 @@ function affine_transforms = turboreg(target_mov, varargin)
     end
     
     if p.pre_register
-        warndlg('Double-check that rows are added to rows and columns to columns, not a mixup.');
+%         warndlg('Double-check that rows are added to rows and columns to columns, not a mixup.');
         for i = 1:length(affine_transforms)
             affine_transforms{i}.T(3, 1) = (affine_transforms{i}.T(3, 1) + dft_transforms(3, i))*p.binxy;
             affine_transforms{i}.T(3, 2) = (affine_transforms{i}.T(3, 2) + dft_transforms(4, i))*p.binxy;
