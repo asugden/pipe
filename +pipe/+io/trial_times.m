@@ -73,7 +73,9 @@ function out = trial_times(mouse, date, run, server, force, allowrunthrough, int
                     matched = false;
                     for k = 1:size(ml.TaskObject, 2)
                         if ~isempty(ml.TaskObject{i, k}) && ~isempty(ml.TaskObject{j, k}) && ...
-                                strcmpi(ml.TaskObject{i, k}, ml.TaskObject{j, k})
+                                strcmpi(ml.TaskObject{i, k}, ml.TaskObject{j, k}) && ...
+                                strcmpi(ml.TaskObject{i, k}(1:3), 'mov') && ... % only check movies
+                                strcmpi(ml.TaskObject{j, k}(1:3), 'mov') 
                             matched = true;
                         end
                     end
@@ -304,9 +306,19 @@ function codes = timingFileCodes(ml)
         if sum(ml.ConditionNumber == i) > 0
             names{end+1} = strrep(lower(ml.TimingFileByCond{i}), '_runtime', '');
             
-            % For retinotopy
+            % For orientation mapping
             if strcmp(names{end}, 'ori_cond_2s_end.m')
-                names{end} = lower(ml.Stimuli.MOV(i).Name);
+                % match your orientation to the orientation name from movie 
+                % file in ml.taskobject
+                for k = 1:size(ml.TaskObject, 2)
+                    if ~isempty(ml.TaskObject{i, k}) && strcmpi(ml.TaskObject{i, k}(1:3), 'mov')
+                        par =  strfind(ml.TaskObject{i, k}, '(');
+                        com =  strfind(ml.TaskObject{i, k}, ',');
+                        ori = ml.TaskObject{i, k}(par(1):com(1));
+                        ori = ori(isstrprop(ori,'digit'));
+                        names{end} = sprintf('%s%s', 'orientation_', ori);
+                    end
+                end
             end
 
             for j = 1:nnames
