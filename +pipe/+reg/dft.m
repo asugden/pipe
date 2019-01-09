@@ -39,13 +39,15 @@ function dft_transforms = dft(target_mov, varargin)
     
     %% Shared between xrun and within run
     % Get the sizes of the files
-    dft_transforms = cell(size(data, 3), 4);
+    dft_transforms = zeros(size(data, 3), 4);
 
+    % Match the binning of the target to the data
+    target_mov_binned = pipe.proc.binxy(target_mov, p.binxy);
+    target_fft = fft2(double(target_mov_binned));
     % Iterate over all times
-    target_fft = fft2(double(target_mov));
     for i = 1:size(data, 3)
         data_fft = fft2(double(data(:, :, i)));
-        [dft_transforms(i, :), ~] =  pipe.reg.dftcore(target_fft, data_fft, p.upsample);
+        dft_transforms(i, :) =  pipe.reg.dftcore(target_fft, data_fft, p.upsample);
     end
 end
 
