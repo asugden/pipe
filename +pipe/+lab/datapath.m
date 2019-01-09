@@ -70,6 +70,8 @@ function path = datapath(mouse, date, run, ftype, server, varargin)
     switch ftype
         case 'sbx'
             path = sbxpath;
+        case 'sbxz'
+            path = fullfile(path, [sbxname '.sbxz']);
         case 'clean'
             path = fullfile(path, [sbxname '.sbxclean']);
         case 'info'
