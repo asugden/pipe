@@ -24,9 +24,9 @@ function data = aligned(path, regpath, k, N, pmt, optolevel)
     % Get the positions to return, accounting for optotune levels
     pos = k:(k - 1) + size(data, 3);
     if ~isempty(optolevel) && info.optotune_used
-        pos = optotune_level:length(info.otwave):info.nframes;
+        pos = optolevel:length(info.otwave):info.nframes;
         pos = pos(pos >= k);
-        pos = pos(pos <= k + size(data, 3));
+        pos = pos(1:N);
     end
     
     if isfield(reg, 'tform')
