@@ -16,7 +16,7 @@ function [remaining, path, server] = jobs_remaining()
 
     % If there's time, check the other servers in random order (so that no
     % one feels hurt)
-    other_servers = {'megatron', 'atlas', 'santiago'};
+    other_servers = {'megatron', 'atlas', 'santiago', 'beastmode', 'sweetness'};
     groups = {'med', 'high'};
     order = randperm(length(other_servers));
     
