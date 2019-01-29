@@ -33,6 +33,8 @@ function runimagej()
             ijroot = 'D:\Analysis_scripts\pipeline\minimal_ImageJ';
         elseif strcmpi(hn, 'atlas')
             ijroot = 'E:\Analysis_scripts\pipeline\minimal_ImageJ';
+        else
+            error('Must set ImageJ location on your server.');
         end
             
         javaaddpath(fullfile(ijroot,'ij.jar'));
