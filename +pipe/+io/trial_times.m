@@ -305,7 +305,7 @@ function codes = timingFileCodes(ml)
             
             % For retinotopy
             if strcmp(names{end}, 'ori_cond_2s_end.m')
-                names{end} = lower(ml.Stimuli.MOV(i).Name);
+                names{end} = lower(ml.Stimugli.MOV(i).Name);
             end
 
             for j = 1:nnames

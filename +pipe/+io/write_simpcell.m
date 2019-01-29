@@ -11,6 +11,7 @@ function write_simpcell(mouse, date, run, varargin)
     addOptional(p, 'f0', true);           % Include the running f0 baseline
     addOptional(p, 'deconvolved', true);  % Deconvolve and include deconvolved traces if true
     addOptional(p, 'pupil', false);       % Add pupil data-- turned off until improvements are made
+    addOptional(p, 'brain_forces', false);% Add the motion of the brain as forces
     addOptional(p, 'photometry', false);  % Add photometry data
     addOptional(p, 'photometry_fiber', 1);% Which photometry fiber(s) to include, can be array
     addOptional(p, 'tags', {});           % Add single-word tags such as 'naive', 'hungry', 'sated'
@@ -138,6 +139,20 @@ function write_simpcell(mouse, date, run, varargin)
     if p.pupil
         savevars = [savevars, 'pupil'];
         [pupil_dx, pupil_dy, pupil_sum, pupil] = sbxPupil(mouse, date, run, p.server);
+    end
+    
+    
+     %% Brain motion
+    
+    if p.brain_forces
+        savevars = [savevars {'scaleml', 'scaleap', 'shearml', 'shearap', 'transml', 'transap'}];
+        mot = pipe.proc.brain_forces(mouse, date, run, p.server);
+        shearml = mot.shearml;
+        shearap = mot.shearap;
+        transml = mot.transml;
+        transap = mot.transap;
+        scaleml = mot.scaleml;
+        scaleap = mot.scaleap;
     end
     
     
