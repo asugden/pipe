@@ -70,10 +70,13 @@ function out = trial_times(mouse, date, run, server, force, allowrunthrough, int
                 if conds(j) > 0 && strcmp(tfile, strrep(lower(ml.TimingFileByCond{j}), '_runtime', ''))
                     % Found a matching condition file, now checking for
                     % matching movies
-                    matched = true;
+                    matched = false;
                     for k = 1:size(ml.TaskObject, 2)
-                        if strcmpi(ml.TaskObject{i, k}, ml.TaskObject{j, k})
-                            matched = false;
+                        if ~isempty(ml.TaskObject{i, k}) && ~isempty(ml.TaskObject{j, k}) && ...
+                                strcmpi(ml.TaskObject{i, k}, ml.TaskObject{j, k}) && ...
+                                strcmpi(ml.TaskObject{i, k}(1:3), 'mov') && ... % only check movies
+                                strcmpi(ml.TaskObject{j, k}(1:3), 'mov') 
+                            matched = true;
                         end
                     end
                     
@@ -303,9 +306,19 @@ function codes = timingFileCodes(ml)
         if sum(ml.ConditionNumber == i) > 0
             names{end+1} = strrep(lower(ml.TimingFileByCond{i}), '_runtime', '');
             
-            % For retinotopy
+            % For orientation mapping
             if strcmp(names{end}, 'ori_cond_2s_end.m')
-                names{end} = lower(ml.Stimugli.MOV(i).Name);
+                % match your orientation to the orientation name from movie 
+                % file in ml.taskobject
+                for k = 1:size(ml.TaskObject, 2)
+                    if ~isempty(ml.TaskObject{i, k}) && strcmpi(ml.TaskObject{i, k}(1:3), 'mov')
+                        par =  strfind(ml.TaskObject{i, k}, '(');
+                        com =  strfind(ml.TaskObject{i, k}, ',');
+                        ori = ml.TaskObject{i, k}(par(1):com(1));
+                        ori = ori(isstrprop(ori,'digit'));
+                        names{end} = sprintf('%s%s', 'orientation_', ori);
+                    end
+                end
             end
 
             for j = 1:nnames
@@ -395,6 +408,12 @@ function [oris, codes] = orientationCodes(ml, codes)
         'Mov(Ori_315,0,0)', 315, ...
         'Mov(Ori_45,0,0)', 45, ...
         'Mov(Ori_90,0,0)', 90, ...
+        'Mov(Pos_1,0,0)', -1, ...  % -1 is for noise stimuli
+        'Mov(Pos_2,0,0)', -1, ...
+        'Mov(Pos_3,0,0)', -1, ...
+        'Mov(Pos_4,0,0)', -1, ...
+        'Mov(Pos_5,0,0)', -1, ...
+        'Mov(Pos_6,0,0)', -1, ...
     };
     nnames = length(nametable)/2;
     npossibles = size(ml.TaskObject, 2);

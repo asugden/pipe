@@ -182,7 +182,7 @@ function write_simpcell(mouse, date, run, varargin)
     end
     
     if ~isempty(ons) && isfield(ons, 'onsets')
-        savevars = [savevars {'onsets', 'offsets', 'licking', 'ensure', 'quinine', 'condition', 'trialerror', 'codes'}];
+        savevars = [savevars {'onsets', 'offsets', 'licking', 'ensure', 'quinine', 'condition', 'trialerror', 'codes', 'orientations'}];
         
         onsets = ons.onsets;
         offsets = ons.offsets;
@@ -192,6 +192,7 @@ function write_simpcell(mouse, date, run, varargin)
         condition = ons.condition;
         trialerror = ons.trialerror;
         codes = ons.codes;
+        orientations = ons.orientation;
     elseif ~isempty(ons)
         savevars = [savevars {'licking'}];
         

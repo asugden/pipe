@@ -40,7 +40,7 @@ function stimulus_tiff(mouse, date, run, pmt, server, fast)
                     end
                 end
 
-                pipe.write_tiff(nim, spath, 'double');
+                pipe.io.write_tiff(nim, spath, 'double');
             end
         end
     end     

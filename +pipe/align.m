@@ -17,7 +17,6 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
     
     % Affine only
     addOptional(p, 'tbin', 1, @isnumeric);  % Number of seconds to average in time for the affine alignment. Set to 0 for affine every frame
-    addOptional(p, 'post_dft_if_unbinned', false);  % If true, run a post-dft even if not binned in time
     addOptional(p, 'binxy', 2, @isnumeric);  % The number of pixels to downsample in space
     addOptional(p, 'highpass_sigma', 5, @isnumeric);  % Size of Gaussian blur to be subtracted from a downsampled version of your image, only if affine
     addOptional(p, 'pre_register', false);  % If affine, pre-register with DFT if true
@@ -25,7 +24,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
     
     % Extra options
     addOptional(p, 'save_title', '');  % Text to append to a file extension (for multiple alignments)
-    addOptional(p, 'chunksize', 1000, @isnumeric);  % The size of a chunk for automation. Recommended to not change
+    addOptional(p, 'chunksize', 1000, @isnumeric);  % The maximum size of a chunk for automation. Recommended to not change
     addOptional(p, 'verbose', false);  % Print out which stages are being processed on if true
     if length(varargin) == 1 && iscell(varargin{1}), varargin = varargin{1}; end
     parse(p, varargin{:});
@@ -144,16 +143,17 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
         alignfile = [path(1:strfind(path,'.')-1) alext];
         info = pipe.metadata(path);
         nframes = info.nframes;
+        binframes = max(1, round(info.framerate*p.tbin));
         if info.optotune_used && ~isempty(p.optotune_level)
             nframes = floor(nframes/length(info.otwave));
+            binframes = max(1, round(binframes / length(info.otwave)));
         end 
-        binframes = max(1, round(info.framerate*p.tbin));
         
         if strcmp(p.aligntype, 'affine')
             %% Affine alignment within a run
             
             % Affine align using turboreg in ImageJ
-            runchunksize = min(ceil(info.nframes/8), p.chunksize);
+            runchunksize = min(ceil(nframes/8), p.chunksize);
             runchunksize = floor(runchunksize/binframes)*binframes;
             nchunks = ceil(nframes/runchunksize);
             ootform = cell(1, nchunks);
@@ -191,7 +191,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
 
             % Now fix interpolated registration with dft registration
             trans = zeros(nframes, 4);
-            if binframes > 1 || p.post_dft_if_unbinned
+            if binframes > 1
                 % Interpolate any missing frames
                 tform = interpolateTransform(tform, known, p.interpolation_type);
 
@@ -242,8 +242,10 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
         else
             % DFT Alignment within a run
             
+            runchunksize = min(ceil(nframes/8), p.chunksize);
+            runchunksize = floor(runchunksize/binframes)*binframes;
+            nchunks = ceil(nframes/runchunksize);
             trans = zeros(nframes, 4);
-            nchunks = ceil(nframes/p.chunksize);
             ootrans = cell(1, nchunks);
             
             % Get the current parallel pool and register
@@ -256,8 +258,8 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
 
             % Recombine to a vector
             for c = 1:nchunks
-                pos = (c - 1)*p.chunksize + 1;
-                upos = min(c*p.chunksize, nframes);
+                pos = (c - 1)*runchunksize + 1;
+                upos = min(c*runchunksize, nframes);
                 trans(pos:upos, :) = ootrans{c};
             end
             
@@ -273,7 +275,7 @@ function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
                     fulltrans(:, :) = nan;
                 end
                 
-                fulltrans(p.optotune_level:length(info.otwave):info.nframes) = trans;
+                fulltrans(p.optotune_level:length(info.otwave):info.nframes, :) = trans;
                 trans = fulltrans;
                 save(alignfile, 'trans');
             end
