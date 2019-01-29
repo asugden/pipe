@@ -3,7 +3,6 @@ function postprocess(mouse, date, varargin)
 %   run simplifycellsort
 
     p = inputParser;
-    % ---------------------------------------------------------------------
     addOptional(p, 'runs', []);  % A list of runs to use. If empty, use all runs
     addOptional(p, 'server', []);  % Server on which data resides
     addOptional(p, 'force', false);  % Overwrite files if they exist
