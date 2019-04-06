@@ -74,7 +74,7 @@ classdef xday < handle
             % determine server and base directory
             basedir = pipe.lab.mousedir(mouse, p.server);
             obj.savedir = sprintf('%s%s%s', basedir, filesep, 'xday'); 
-            if ~exist(obj.savedir, 'dir') || force
+            if ~exist(obj.savedir, 'dir') || p.force
                 mkdir(obj.savedir)
             end
 
