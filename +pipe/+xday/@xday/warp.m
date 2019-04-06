@@ -44,7 +44,7 @@ for i = 1:length(obj.initial_dates)
     img = img/max(img(:));
     img = adapthisteq(img);
 
-    NonReg_FOV(:,:,curr_FOV) = img;
+    NonReg_FOV(:,:,i) = img;
 
 end
 pipe.io.write_tiff(NonReg_FOV, [obj.savedir filesep 'FOV_NONregistered_across_days'])
