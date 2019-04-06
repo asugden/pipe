@@ -1,4 +1,8 @@
 function align(obj)
+% Run the CellReg algorithm to align masks across 
+% days. Apply calcualted warp registration to masks
+% for each day and pass to CellRegAuto (script to run
+% CellReg with no GUI. 
 
 % get frame size
 if ~isfield(obj.pars, 'sz')
