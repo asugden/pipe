@@ -102,6 +102,7 @@ classdef xday < handle
                 date = obj.initial_dates(i);
                 runs{i} = pipe.lab.runs(mouse, date, p.server);
             end
+            obj.initial_runs = runs;
 
             % save newly minted xday tracking object
             obj.mouse = mouse;
