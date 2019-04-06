@@ -1,6 +1,28 @@
 classdef xday < handle
     % Class that includes functions for aligning FOVs and masks
     % across days
+
+    % ALIGNMENT
+    % ---------
+    % step 1 --> obj = pipe.xday.xday(mouse, varargin)
+    %        Initialize class object.
+    % step 2 --> obj.warp(obj, varargin)
+    %        Register FOVs using imregdemons. 
+    % step 3 --> obj.besttarget(obj, best_day, bad_days)
+    %        Validate registered FOVs.
+    % step 4 --> obj.(obj, bad_days_to_keep, matched_days)
+    %        (only if step 3 had bad_days) Fix registration hiccups.
+    % step 5 --> obj.align(obj, varargin)
+    %        
+    % 
+    % PLOTTING (outside of class, see pipe.xday)
+    % --------
+    % step 6 --> linear_plot_aligned_ROIs(obj, cell_score_threshold)
+    %        Plot each ROI aligned across days cropped around 
+    %        mean centroid.
+    % step 7 --> xday_qc_metrics(obj, cell_score_threshold)
+    %        Plot a number of simple metrics to check the quality of
+    %        your alignments. 
     
     % class properties
     properties
@@ -75,7 +97,7 @@ classdef xday < handle
             end
 
             % get runs
-            runs = {}
+            runs = {};
             for i = 1:length(obj.initial_dates)
                 date = obj.initial_dates(i);
                 runs{i} = pipe.lab.runs(mouse, date, p.server);
