@@ -29,9 +29,9 @@ for i = 1:length(obj.initial_dates)
     % load first 1000 registered frames from each run and take mean
     movm = zeros(sz(1), sz(2));
     for k = 1:length(obj.initial_runs{i})
-        pipe.path(obj.mouse, obj.initial_dates(i), ...
+        path = pipe.path(obj.mouse, obj.initial_dates(i), ...
                   obj.initial_runs{i}(k), 'sbx', obj.pars.server);
-        mov = mean(pipe.imread(path, 1, 1000, 'register', true), 3);
+        mov = mean(pipe.imread(path, 1, 1000, 1, [], 'register', true), 3);
         movm = movm + mov;
     end
     movm = movm./length(obj.initial_runs{i});
