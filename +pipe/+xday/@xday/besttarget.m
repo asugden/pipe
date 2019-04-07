@@ -78,8 +78,8 @@ else
     % output for user
     disp(['Two-stage registration done: Go to ' obj.savedir])
     disp(['    1. Please look through your bad_day_N_to_day_' ...
-        num2str(best_day) '_two_stage.tifs to determine best' ...
-        'two-stage registration path...'])
+          num2str(best_day) '_two_stage.tifs'])
+    disp('       to determine best two-stage registration path.')
     disp('    2. Run obj.finalizetarget...')
 end
 
