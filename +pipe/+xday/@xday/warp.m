@@ -85,15 +85,18 @@ parfor curr_im = 1:nIm
         % pad wirth zeros to get correct dimensions
         cols_remove_l = edges(1);
         cols_remove_r = edges(2);
-        rows_remove = edges(3);
+        rows_remove_top = edges(3);
+        rows_remove_bottom = edges(4);
         col_buffer_l = zeros(size(D,1),cols_remove_l,size(D,3));
         col_buffer_r = zeros(size(D,1),cols_remove_r,size(D,3));  
         
         % now buffer back in both dimensions
         WarpField = [col_buffer_l D col_buffer_r];
-        row_buffer = zeros(rows_remove, size(WarpField,2), ...
+        row_buffer_top = zeros(rows_remove_top, size(WarpField,2), ...
                            size(WarpField,3));
-        WarpField = [row_buffer; WarpField; row_buffer];
+        row_buffer_bottom = zeros(rows_remove_bottom, size(WarpField,2), ...
+                           size(WarpField,3));
+        WarpField = [row_buffer_top; WarpField; row_buffer_bottom];
         AllWarpFields{curr_im}{other_im_ind(i)} = WarpField;
     end
 end
@@ -103,8 +106,8 @@ RegFOV = [];
 for curr_im = 1:nIm
     curr_target = NonReg_FOV(:, :, curr_im);
     for i = 1:nIm
-        tmp_reg_im = imwarp(NonReg_FOV(:, :, other_im_ind(i)), ...
-                        AllWarpFields{curr_im}{other_im_ind(i)});
+        tmp_reg_im = imwarp(NonReg_FOV(:, :, i), ...
+                            AllWarpFields{curr_im}{i});
         tmpstack = cat(3, curr_target, tmp_reg_im);
         RegFOV = cat(3, RegFOV, tmpstack);
     end
