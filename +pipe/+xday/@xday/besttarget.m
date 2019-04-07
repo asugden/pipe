@@ -11,6 +11,7 @@ obj.warptarget = best_day;
 
 % load AllWarpFields
 AWF = load(obj.warpdir);
+AWF = AWF.AllWarpFields;
 
 % load in the non registered FOV
 UnregMov = pipe.io.read_tiff([obj.savedir filesep ... 
