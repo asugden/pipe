@@ -60,7 +60,7 @@ else
         % save two_stage warps for each bad day 
         warpdir = [obj.savedir filesep 'bad_day_' num2str(k) ...
             '_warpfields.mat'];
-        save(obj.warpdir, 'AllWarpFields', '-v7.3')
+        save(obj.warpdir, 'two_stage_AWF', '-v7.3')
 
         % write tiff stack registered to best_day
         pipe.io.write_tiff(RegMov, [obj.savedir filesep ...
