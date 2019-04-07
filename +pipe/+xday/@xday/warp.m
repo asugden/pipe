@@ -131,7 +131,7 @@ save(obj.warpdir, 'AllWarpFields', '-v7.3')
 save([obj.savedir filesep 'xday_obj'],'obj','-v7.3')
 
 % output for user
-disp(['Registration (warping) done: Go to ' obj.savedir ...
-      ' to select best warp (and identify any failed days).'])
+disp(['Registration (warping) done: Go to ' obj.savedir ])
+disp('to select best warp (and identify any failed days).')
 
 end
