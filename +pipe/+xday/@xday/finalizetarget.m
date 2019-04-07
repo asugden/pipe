@@ -16,6 +16,7 @@ end
 
 % load AllWarpFields
 AWF = load(obj.warpdir);
+AWF = AWF.AllWarpFields;
 warpfields = AWF{obj.warptarget};
 
 % load in the non registered FOV
