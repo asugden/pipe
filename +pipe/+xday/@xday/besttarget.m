@@ -54,7 +54,7 @@ else
         RegMov = [];
         for i = 1:length(obj.initial_dates)
             two_stage_AWF{i}{k} = AWF{best_day}{i} + AWF{i}{k};
-            img = imwarp(UnregMov(:,:,i), two_stage_AWF{i}{k});
+            img = imwarp(UnregMov(:,:,k), two_stage_AWF{i}{k});
             % RegMov(:, :, i) = img;
             img2 = cat(3, UnregMov(:, :, best_day), img);
             RegMov = cat(3, RegMov, img2);
