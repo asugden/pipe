@@ -18,7 +18,7 @@ masks_original = zeros(sz(1), sz(2), length(obj.final_dates));
 for i = 1:length(obj.final_dates)
     date = obj.final_dates(i);
     run = obj.final_runs{i}(end);
-    simp = load(obj.mouse, date, run, 'simpcell', ...
+    simp = pipe.load(obj.mouse, date, run, 'simpcell', ...
                obj.pars.server);
     masks_original(:,:,i) = (simp.masks');
 end
