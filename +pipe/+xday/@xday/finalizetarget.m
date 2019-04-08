@@ -26,11 +26,11 @@ unregmov = pipe.io.read_tiff([obj.savedir filesep ...
 % add in your corrected warpfields
 for i = 1:length(bad_days_to_keep)
     bad_day = bad_days_to_keep(i);
-    bad_ind = find(ismember(obj.bad_days, bad_day));
-    two_stage_AWF = obj.badwarpfields{bad_ind};
-    warpfields{bad_ind} = two_stage_AWF{matched_days(i)}{bad_ind};
+    % bad_ind = find(ismember(obj.bad_days, bad_day));
+    two_stage_AWF = obj.badwarpfields{bad_day};
+    warpfields{bad_ind} = two_stage_AWF{matched_days(i)}{bad_day};
 end
-obj.badwarpfields = '- conflicts solved -';
+% obj.badwarpfields = '- conflicts solved -';
 
 % create finalized date/run vectors and warpfields,
 % removing indices that were in obj.bad_days, but not 
@@ -66,9 +66,9 @@ end
 
 % write tiff stacks of final results pre and post registration
 pipe.io.write_tiff(regmov,[obj.savedir filesep ...
-    'FOV_registered_to_day_' num2str(best_day) '.tif'])
+    'FOV_registered_to_day_' num2str(best_day) '.tif']);
 pipe.io.write_tiff(unregmov,[obj.savedir filesep ...
-    'FOV_NONregistered_to_day_' num2str(best_day) '_final.tif'])
+    'FOV_NONregistered_to_day_' num2str(best_day) '_final.tif']);
 
 % save xday object
 save([obj.savedir filesep 'xday_obj'],'obj','-v7.3')
