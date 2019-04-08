@@ -46,8 +46,8 @@ else
         k = bad_days(j);
         % preallocate
         for i = 1:length(obj.initial_dates)
-            for j = 1:length(obj.initial_dates)
-                two_stage_AWF{i}{j} = [];
+            for m = 1:length(obj.initial_dates)
+                two_stage_AWF{i}{m} = [];
             end
         end
         RegMov = [];
