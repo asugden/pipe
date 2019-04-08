@@ -26,8 +26,8 @@ unregmov = pipe.io.read_tiff([obj.savedir filesep ...
 % add in your corrected warpfields
 for i = 1:length(bad_days_to_keep)
     bad_day = bad_days_to_keep(i);
-    % bad_ind = find(ismember(obj.bad_days, bad_day));
-    two_stage_AWF = obj.badwarpfields{bad_day};
+    bad_ind = find(ismember(obj.bad_days, bad_day));
+    two_stage_AWF = obj.badwarpfields{bad_ind};
     warpfields{bad_day} = two_stage_AWF{matched_days(i)}{bad_day};
 end
 % obj.badwarpfields = '- conflicts solved -';
