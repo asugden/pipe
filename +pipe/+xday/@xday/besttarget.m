@@ -61,12 +61,12 @@ else
         % save two_stage warps for each bad day 
         warpdir = [obj.savedir filesep 'bad_day_' num2str(k) ...
             '_warpfields.mat'];
-        save(warpdir, 'two_stage_AWF', '-v7.3')
+        save(warpdir, 'two_stage_AWF', '-v7.3');
 
         % write tiff stack registered to best_day
         pipe.io.write_tiff(RegMov, [obj.savedir filesep ...
             'bad_day_' num2str(k) '_to_day_' num2str(best_day) ...
-            '_two_stage.tif'])
+            '_two_stage.tif']);
 
         % hold onto your two stage warps in xday until you solve them
         badwarps{j} = two_stage_AWF;
@@ -85,6 +85,6 @@ else
 end
 
 % save xday object
-save([obj.savedir filesep 'xday_obj'],'obj','-v7.3')
+save([obj.savedir filesep 'xday_obj'],'obj','-v7.3');
 
 end
