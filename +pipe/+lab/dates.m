@@ -13,7 +13,7 @@ function out = dates(mouse, server)
         if fs(i).isdir
             if regexp(fs(i).name, pattern)
                 date = str2num(fs(i).name(1:6));
-                if ~isempty(sbxRuns(mouse, date, server))
+                if ~isempty(pipe.lab.runs(mouse, date, server))
                     out(length(out)+1) = date;
                 end
             end
