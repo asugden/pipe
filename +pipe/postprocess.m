@@ -235,25 +235,7 @@ function postprocess(mouse, date, varargin)
     
     if (p.deconvolve)
         for run = p.runs
-            decon_path = pipe.path(mouse, date, run, 'decon', p.server);
-            
-            if isempty(decon_path) || p.force
-                display('Deconvolving signals...')
-
-                gd = pipe.load(mouse, date, run, 'signals', p.server);
-
-                ncells = int16(length(gd.cellsort) - 1);
-                nframes = int32(length(gd.cellsort(1).timecourse.dff_axon));
-
-                dff = zeros(ncells, nframes);
-                for i = 1:ncells
-                    dff(i, :) = gd.cellsort(i).timecourse.dff_axon;
-                end
-
-                deconvolved = pipe.proc.deconvolve(dff);
-                dpath = pipe.path(mouse, date, run, 'decon', p.server, 'estimate', true);
-                save(dpath, 'deconvolved');
-            end
+            pipe.pull.deconvolve(mouse, date, run, p.server, p.force);
         end
     end
     

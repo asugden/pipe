@@ -170,17 +170,7 @@ function write_simpcell(mouse, date, run, varargin)
     
     if p.deconvolved
         savevars{end+1} = 'deconvolved';
-        
-        decon_path = pipe.path(mouse, date, run, 'decon', p.server);
-        if isempty(decon_path)
-            display('Deconvolving signals...')
-            deconvolved = pipe.proc.deconvolve(dff);
-            dpath = pipe.path(mouse, date, run, 'decon', p.server, 'estimate', true);
-            save(dpath, 'deconvolved');
-        else
-            decon = load(decon_path, '-mat');
-            deconvolved = single(decon.deconvolved);
-        end
+        deconvolved = pipe.pull.deconvolve(mouse, date, run, p.server);
     end
     
     %% Behavioral data
@@ -284,3 +274,35 @@ function out = localMatchPhotometry2P(frames, photometry, sampling_rate, nframes
         out = [out appendarr];
     end
 end
+
+
+function out = percentiledff(vec, fps, time_window, percentile)
+% PERCENTILEDFF Return a dff with the 10th percentile subtracted across a
+%   default 32-second window
+
+    % Default values from Rohan and Christian
+    % time_window is moving window of X seconds - 
+    % calculate f0 at time window prior to each frame
+    if nargin < 3, time_window = 32; end
+    if nargin < 4, percentile = 10; end
+
+    nframes = length(vec);
+    nROIs = 1;
+
+    % Now calculate dFF using axon method
+    time_window_frame = round(time_window*fps);
+
+    f0 = nan(1, nframes);
+    for i = 1:nframes
+        if i <= time_window_frame
+            frames = vec(1:time_window_frame);
+            f0(i) = prctile(frames, percentile, 2);
+        else
+            frames = vec(i - time_window_frame:i-1);
+            f0(i) = prctile(frames, percentile, 2);
+        end
+    end
+    
+    out = (vec - f0)./f0; 
+end
+

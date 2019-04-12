@@ -29,44 +29,59 @@ function update_simpcells(mouse, varargin)
     
     for date = p.dates
         runs = pipe.lab.runs(mouse, date, p.server);
-        re_pull = false;
-        update_simpcell = false;
         
-        for run = runs
-            sc = pipe.load(mouse, date, run, 'simpcell', p.server, 'error', false);
-            
-            if ~isempty(sc)
-                if ~isfield(sc, 'version') || sc.version < 2.0
-                    update_simpcell = true;
-                    
+        if pipe.pull.is_clicked(mouse, date, runs, p.server)
+            % Catch a bug in processing
+            re_pull = false;
+
+            for run = runs
+                if ~p.ignore_signals
                     sigpath = pipe.path(mouse, date, run, 'signals', p.server);
-                    file = dir(sigpath);
-                    if datenum(file.date) > datenum(2018, 08, 01)  % Very conservative estimate- pip3 had not been written then
+
+                    if isempty(sigpath)
                         re_pull = true;
-                        
-                        if p.report_only
-                            fprintf('Signals file from %s %6i %03i is out of date.\n', ...
-                                mouse, date, run);
-                        elseif re_pull
-                            break;
+                    else
+                        file = dir(sigpath);
+                        if datenum(file.date) > datenum(2018, 08, 01)  % Very conservative estimate- pip3 had not been written then
+                            sig = load(sigpath, '-mat');
+                            if ~isfield(sig, 'updated_code') || sig.updated_code < 190401
+                                re_pull = true;
+                            end
                         end
-                    elseif p.report_only
-                        fprintf('Simpcell file from %s %6i %03i is out of date.\n', ...
-                                mouse, date, run);
                     end
                 end
-            end
-        end
-        
-        if re_pull && ~p.report_only && ~p.ignore_signals
-            pipe.postprocess(mouse, date, 'server', p.server, ...
-                'force', true, 'job', true, 'raw', p.raw, 'f0', p.f0, ...
-                'deconvolved', p.deconvolved, 'pupil', p.pupil, ...
-                'brain_forces', p.brain_forces, 'photometry', p.photometry, ...
-                'photometry_fiber', p.photometry_fiber, 'save_tiff_checks', false);    
-        elseif update_simpcell && ~p.report_only
-            for run = runs
-                pipe.io.write_simpcell(mouse, date, run, p.server, 'force', true);
+
+                if ~re_pull
+                    re_simpcell = true;
+                    sc = pipe.load(mouse, date, run, 'simpcell', p.server, 'error', false);
+
+                    if ~isempty(sc)
+                        if isfield(sc, 'version') && sc.version >= 2.0
+                            re_simpcell = false;
+                        end
+                    end
+
+                    if re_simpcell
+                        fprintf('Simpcell file from %s %6i %03i is out of date.\n', ...
+                            mouse, date, run);
+                        if ~p.report_only
+                            pipe.io.write_simpcell(mouse, date, run, ...
+                                p.server, 'force', true);
+                        end
+                    end
+                else
+                    fprintf('Signals file from %s %6i is out of date.\n', ...
+                                mouse, date);
+
+                    if ~p.report_only
+                        pipe.postprocess(mouse, date, 'server', p.server, ...
+                            'force', true, 'job', true, 'raw', p.raw, 'f0', p.f0, ...
+                            'deconvolved', p.deconvolved, 'pupil', p.pupil, ...
+                            'brain_forces', p.brain_forces, 'photometry', p.photometry, ...
+                            'photometry_fiber', p.photometry_fiber, 'save_tiff_checks', false);
+                    end
+                    break;
+                end
             end
         end
     end
