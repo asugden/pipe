@@ -100,6 +100,9 @@ function out = trial_times(mouse, date, run, server, force, allowrunthrough, int
     if length(onsetst) ~= length(ml.ConditionNumber)
         if length(onset2p) - onsets(end) < 1.5*median(diff(onsets))
             disp(sprintf('Warning: the number of stimuli %i presented does not match the number recorded, %i. \nHowever, it appears that the stimulus just ran through the end so we will allow it through.', length(ml.ConditionNumber), length(onsetst)));
+        elseif length(onsets) == length(offsets) + 1 && mean(nidaq.visstim(end-10:end)) > ttlv
+            onsets = onsets(1:end-1);
+            warndlg('Had to remove a final onset because there was no matching offset.');
         else
             warndlg(sprintf(...
                 'There is an error in the number of monkeylogic stimuli presented, %i, and the number detected by the nidaq card, %i.',...
@@ -225,7 +228,6 @@ function [onsets, offsets] = ttledges(ttl, timestamps, mininterval, ttlv)
     diff_ind2 = diff([-1*mininterval ;offsets]);
     ind_error2 = find(diff_ind2 < mininterval);
     offsets(ind_error2) = [];
-
 end
 
 
