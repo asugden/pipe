@@ -23,6 +23,17 @@ classdef RegWriter < handle
                 error('Cannot overwrite an existing file unless forced.');
             end
             
+            if ~isfield(info, 'nchan')
+                switch info.channels
+                    case 1
+                        info.nchan = 2;      % both PMT0 & 1
+                    case 2
+                        info.nchan = 1;      % PMT 0
+                    case 3
+                        info.nchan = 1;      % PMT 1
+                end
+            end
+            
             obj.info = info;
             obj.path = path;
             obj.fid = fopen(obj.path, 'w');
