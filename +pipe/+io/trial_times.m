@@ -21,7 +21,11 @@ function out = trial_times(mouse, date, run, server, force, allowrunthrough, int
     spath = pipe.path(mouse, date, run, 'onsets', server, 'estimate', true);
     if ~force && exist(spath)
         out = load(spath, '-mat');
-        return
+        if isfield(out, 'onsets') && ~isfield(out, 'offsets')
+            force = true;
+        else
+            return
+        end
     end
 
     % Set the TTL voltage threshold for measuring stimulus onsets
