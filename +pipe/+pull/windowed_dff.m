@@ -27,7 +27,7 @@ function cellsort = windowed_dff(cellsort, fps, time_window, percentile)
     % how many ROIs per core
     nROIs_per_core = ceil(nrois/pool_siz);
     ROI_vec = 1:nROIs_per_core.*pool_siz;
-    ROI_blocks = unshuffle_array(ROI_vec,nROIs_per_core);
+    ROI_blocks = pipe.proc.unshuffle_array(ROI_vec,nROIs_per_core);
     ROI_start_points = ROI_blocks(:,1);
     parfor curr_ROI_ind = 1:pool_siz
         ROIs_to_use = ROI_blocks(curr_ROI_ind,:)
