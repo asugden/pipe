@@ -21,14 +21,14 @@ function cellsort = windowed_dff(cellsort, fps, time_window, percentile)
         traces_f(curr_ROI, :) = cellsort(curr_ROI).timecourse.subtracted;
     end
 
-    openParallel();
+    pipe.parallel();
     pool_siz = 8;
 
     % how many ROIs per core
     nROIs_per_core = ceil(nrois/pool_siz);
     ROI_vec = 1:nROIs_per_core.*pool_siz;
     ROI_blocks = unshuffle_array(ROI_vec,nROIs_per_core);
-    ROI_start_points = ROI_blocks(:,1);   
+    ROI_start_points = ROI_blocks(:,1);
     parfor curr_ROI_ind = 1:pool_siz
         ROIs_to_use = ROI_blocks(curr_ROI_ind,:)
         ROIs_to_use(ROIs_to_use > nrois) = [];
@@ -59,6 +59,6 @@ function cellsort = windowed_dff(cellsort, fps, time_window, percentile)
     for curr_ROI = 1:nrois
         cellsort(curr_ROI).timecourse.f0_axon = f0(curr_ROI,:);
         cellsort(curr_ROI).timecourse.dff_axon = traces_dff(curr_ROI,:);
-    end    
+    end
 end
 

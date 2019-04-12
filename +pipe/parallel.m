@@ -1,11 +1,11 @@
 function [pool, sz] = parallel(varargin)
-%OPENPARALLEL opens a Matlab pool using the correct conventions for each
+%PARALLEL opens a Matlab pool using the correct conventions for each
 %   Matlab version
 
     p = inputParser;
     addOptional(p, 'size', []);  % Allow for choosing of size workers
     parse(p, varargin{:});
-    p = p.Results;    
+    p = p.Results;
 
     % Test if gcp opens a pool
     pool = gcp('nocreate');

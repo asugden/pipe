@@ -68,4 +68,7 @@ function update_simpcells(mouse, varargin)
             for run = runs
                 pipe.io.write_simpcell(mouse, date, run, p.server, 'force', true);
             end
+        end
+    end
     
+end

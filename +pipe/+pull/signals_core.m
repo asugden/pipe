@@ -16,8 +16,8 @@ function cellsort = signals_core(path, fsz, nframes, cellsort, varargin)
     nchunks = ceil(nframes/p.chunksize);
     csignal = cell(1, nchunks);
     cneuropil = cell(1, nchunks);
-    
-    openParallel();
+
+    pipe.parallel();
     parfor c = 1:nchunks
         data = pipe.imread(path, ...
                            (c-1)*p.chunksize + 1, ...
@@ -29,11 +29,11 @@ function cellsort = signals_core(path, fsz, nframes, cellsort, varargin)
                            'registration_path', p.registration_path);
         signals = zeros(size(data, 3), nrois);
         neuropil = zeros(size(data, 3), nrois - 1);
-        
+
         if ~p.weighted_signal
             data = reshape(data, fsz(1)*fsz(2), size(data, 3));
         end
-        
+
         for j = 1:nrois
             if ~p.weighted_signal
                 signals(:, j) = mean(data(cellsort(j).mask(:), :));
@@ -42,23 +42,23 @@ function cellsort = signals_core(path, fsz, nframes, cellsort, varargin)
                     signals(f, j) = cellsort(j).weights.*data(:, :, f);
                 end
             end
-            
+
             if j < nrois
                 neuropil(:, j) = median(double(data(cellsort(j).neuropil == 1, :)));
             end
         end
-        
+
         csignal{c} = signals;
         cneuropil{c} = neuropil;
     end
-    
+
     signal = zeros(nframes, nrois);
     neuropil = zeros(nframes, nrois-1);
     for c = 1:nchunks
         lpos = (c - 1)*p.chunksize + 1;
         upos = min(c*p.chunksize, nframes);
         upos = min(upos, lpos + size(csignal{c}, 1) - 1);
-        
+
         signal(lpos:upos, :) = csignal{c};
         neuropil(lpos:upos, :) = cneuropil{c};
     end
@@ -73,7 +73,7 @@ function cellsort = signals_core(path, fsz, nframes, cellsort, varargin)
     for r = 1:nrois-1
         cellsort(r).timecourse.raw = signal(:, r)';
         cellsort(r).timecourse.neuropil = neuropil(:, r)';
-        % try 
+        % try
         if p.weighted_neuropil
             % Get weight to scale npil to maximize skewness of subtracted trace
             subfun = @(x) -1*skewness(cellsort(r).timecourse.raw - ...
@@ -94,9 +94,9 @@ function cellsort = signals_core(path, fsz, nframes, cellsort, varargin)
         %     cellsort(r).npil_weight = 1;
         % end
     end
-    
+
     cellsort(nrois).timecourse.raw = signal(:, nrois)';
-    cellsort(nrois).timecourse.neuropil = zeros(1, size(signal, 1)); 
+    cellsort(nrois).timecourse.neuropil = zeros(1, size(signal, 1));
     cellsort(nrois).timecourse.subtracted = signal(:, nrois)';
     cellsort(nrois).npil_weight = 0;
 end
