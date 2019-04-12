@@ -30,6 +30,7 @@ function mov = imread(path, k, N, pmt, optolevel, varargin)
     addOptional(p, 'mtype', []);  % Movie type- estimated from extension unless entered here
     addOptional(p, 'register', false);  % Register upon reading if true
     addOptional(p, 'registration_path', []);  % Estimated unless explicitly entered
+    addOptional(p, 'ignore_sbxreg', false);  % If true, ignore sbxreg file and force re-alignment of data
     if length(varargin) == 1 && iscell(varargin{1}), varargin = varargin{1}; end
     parse(p, varargin{:});
     p = p.Results;
@@ -38,15 +39,21 @@ function mov = imread(path, k, N, pmt, optolevel, varargin)
     
     % Find file type
     [~, ~, ext] = fileparts(path);
-    if p.register && (~strcmpi(ext, '.sbxreg') || ~isempty(p.registration_path))
+    if p.register
+        if strcmpi(ext, '.sbxreg')
+            mov = pipe.io.read_sbx(path, k, N, pmt, optolevel);
+            return
+        end
+
+        [base, name, ~] = fileparts(path);
+        % Catch existing sbxreg files
+        if ~p.ignore_sbxreg && exist(fullfile(base, [name '.sbxreg']), 'file')
+            mov = pipe.io.read_sbx(fullfile(base, [name '.sbxreg']), ...
+                                   k, N, pmt, optolevel);
+            return;
+        end
+
         if isempty(p.registration_path)
-            [base, name, ~] = fileparts(path);
-            % Catch existing sbxreg files
-            if exist(fullfile(base, [name '.sbxreg']), 'file')
-                mov = pipe.imread(fullfile(base, [name '.sbxreg']), k, N, pmt, optolevel);
-                return;
-            end
-            
             % Look for affine alignment, then dft alignment for realtime
             if exist(fullfile(base, [name '.alignaffine']), 'file')
                 p.registration_path = fullfile(base, [name '.alignaffine']);
@@ -65,7 +72,6 @@ function mov = imread(path, k, N, pmt, optolevel, varargin)
     end
     
     %% Read file
-    
     if strcmpi(p.mtype, 'sbx') || (length(ext) > 3 && strcmpi(ext(1:4), '.sbx'))
         mov = pipe.io.read_sbx(path, k, N, pmt, optolevel);
     else

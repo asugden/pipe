@@ -1,5 +1,6 @@
 function align(impaths, varargin) %mouse, date, runs, target, pmt, pars)
 % PIPE.REG.ALIGN First applies an affine alignment, and then follows it
+
 %   with a DFT registration if the affine alignment is averaged over frames
     % sbxpaths should be a cell array of paths to .sbx files
 

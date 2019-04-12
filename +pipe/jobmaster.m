@@ -16,8 +16,8 @@ function jobmaster(varargin)
     
     % Get paths
     path_now = pipe.lab.jobdb([], 'now', true);
-    path_error = pipe.lab.jobdb([], 'error');
-    path_complete = pipe.lab.jobdb([], 'complete');
+    % path_error = pipe.lab.jobdb([], 'error');
+    % path_complete = pipe.lab.jobdb([], 'complete');
     path_high = pipe.lab.jobdb([], 'high');
     
     % Announce to the world that this user is running jobmaster
@@ -75,8 +75,10 @@ function jobmaster(varargin)
                         job.pars{end+1} = 'run_as_job';
                         job.pars{end+1} = true;
                         pipe.preprocess(job.mouse, job.date, job.pars);
+                        path_complete = pipe.lab.jobdb(server, 'complete');
                         movefile(fullfile(path_now, [fname '.mat']), fullfile(path_complete, [fname '.mat']));
                     catch err
+                        path_error = pipe.lab.jobdb(server, 'error');
                         movefile(fullfile(path_now, [fname '.mat']), fullfile(path_error, [fname '.mat']));
                         disp(['Error on job ' fname]);
                         
