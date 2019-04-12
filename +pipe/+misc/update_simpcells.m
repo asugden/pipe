@@ -41,7 +41,7 @@ function update_simpcells(mouse, varargin)
                     
                     sigpath = pipe.path(mouse, date, run, 'signals', p.server);
                     file = dir(sigpath);
-                    if datenum(file.date) > datenum(2017, 08, 01)  % Very conservative estimate- pip3 had not been written then
+                    if datenum(file.date) > datenum(2018, 08, 01)  % Very conservative estimate- pip3 had not been written then
                         re_pull = true;
                         
                         if p.report_only
