@@ -14,6 +14,7 @@ function postprocess(mouse, date, varargin)
     addOptional(p, 'weighted_neuropil', false);  % Use weighting for neuropil rather than binary masks
     addOptional(p, 'deconvolve', true);  % Save a deconvolved version of each of the traces
     addOptional(p, 'write_simpcell', true);  % Write a simpcell using defaults.
+    addOptional(p, 'save_tiff_checks', true);  % Save TIFFs for checking data if true
     
     addOptional(p, 'pmt', 1);  % PMT to use for extraction
     addOptional(p, 'optotune_level', []);  % optotune level to extract from
@@ -52,8 +53,8 @@ function postprocess(mouse, date, varargin)
     % Also, will only work if ICA file exists
     if isempty(p.icapath)
         if p.icarun < 0, p.icarun = p.runs(end); end
-        p.icapath = pipe.path(mouse, date, p.icarun, 'ica', p.server);
-        if isempty(p.icapath)
+        icapath = pipe.path(mouse, date, p.icarun, 'ica', p.server);
+        if isempty(icapath)
             error('ICA not yet created for %s %d %02i. Try pipe.preprocess.', mouse, date, p.icarun);
         end
     else
@@ -95,6 +96,8 @@ function postprocess(mouse, date, varargin)
     end
     
     %% Deal with old formats
+    
+    p.icapath = pipe.path(mouse, date, p.icarun, 'ica', p.server);
     
     p.legacy_clicking_format = false;
     [seld, erosions] = pipe.pull.clicked_from_server(mouse, date, p.icarun);
@@ -272,6 +275,8 @@ function postprocess(mouse, date, varargin)
         end
     end
     
-    pipe.pull.tif_alignment_check(mouse, date, p.runs, p.server);
+    if (p.save_tiff_checks)
+        pipe.pull.tif_alignment_check(mouse, date, p.runs, p.server);
+    end
 end 
 

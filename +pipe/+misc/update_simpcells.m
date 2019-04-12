@@ -5,6 +5,7 @@ function update_simpcells(mouse, varargin)
     % Most important variables
     addOptional(p, 'dates', []);          % Defaults to running across all dates
     addOptional(p, 'server', []);         % Server name, empty if the same server
+    addOptional(p, 'ignore_signals', false); % If true, do not update signals files (Andrew)
     addOptional(p, 'report_only', false); % Report, don't rerun, bad dates if true
     
     addOptional(p, 'raw', true);          % Include the raw data
@@ -57,17 +58,14 @@ function update_simpcells(mouse, varargin)
             end
         end
         
-        if re_pull && ~p.report_only
+        if re_pull && ~p.report_only && ~p.ignore_signals
             pipe.postprocess(mouse, date, 'server', p.server, ...
                 'force', true, 'job', true, 'raw', p.raw, 'f0', p.f0, ...
                 'deconvolved', p.deconvolved, 'pupil', p.pupil, ...
                 'brain_forces', p.brain_forces, 'photometry', p.photometry, ...
-                'photometry_fiber', p.photometry_fiber);    
+                'photometry_fiber', p.photometry_fiber, 'save_tiff_checks', false);    
         elseif update_simpcell && ~p.report_only
             for run = runs
                 pipe.io.write_simpcell(mouse, date, run, p.server, 'force', true);
             end
-        end
-    end
     
-end
