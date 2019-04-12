@@ -66,7 +66,7 @@ function update_simpcells(mouse, varargin)
                             mouse, date, run);
                         if ~p.report_only
                             pipe.io.write_simpcell(mouse, date, run, ...
-                                p.server, 'force', true);
+                                'server', p.server, 'force', true);
                         end
                     end
                 else
