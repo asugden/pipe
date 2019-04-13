@@ -206,7 +206,7 @@ alpha_small = alpha_small(1:end-1,:,:);
 down = 1;
 across = 0;
 transparency_factor = 0.4;
-skippers = find(xday_scores < obj.LowestCellScoreThreshold);
+skippers = find(xday_scores < cell_score_threshold);
 true_ind = find(nan_free_vec); % actual "absolute" ROI ID acounting for nans 
 
 % plot
