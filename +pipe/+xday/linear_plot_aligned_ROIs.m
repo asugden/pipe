@@ -18,7 +18,7 @@ if ~exist(xday_folder, 'dir')
 end
 
 %% Load mean images, already warped
-warped_images = pipe.io.read_tiff([obj.savedir '\FOV_registered_to_day_' num2str(obj.besttarget) '.tif']);
+warped_images = pipe.io.read_tiff([obj.savedir '\FOV_registered_to_day_' num2str(obj.warptarget) '.tif']);
 
 %% Unpack masks
 if isprop(obj, 'bridgealignment')
