@@ -10,8 +10,9 @@ function finalizetarget(obj, bad_days_to_keep, matched_days)
 
 if nargin < 3 || isempty(matched_days) || ...
    nargin < 2 || isempty(bad_days_to_keep)
-   disp('')
-   return
+   disp('Dropping all remaining bad_days.')
+   bad_days_to_keep = [];
+   matched_days = [];
 end
 
 % load AllWarpFields
