@@ -177,7 +177,9 @@ imagesc(crossx)
 title('\fontsize{8}For cells identified on a given day, how many of those are found on another day');
 xlabel('Day #');
 ylabel('Day #');
-colormap('inferno')
+try
+    colormap('inferno')
+end
 c = colorbar;
 c.Label.String = 'Cells';
 c.Label.FontSize = 14;
@@ -191,7 +193,9 @@ imagesc(xday_inds ~= 0)
 title('Registered cell masks');
 xlabel('Day #');
 ylabel('Cell #');
-colormap('inferno')
+try
+    colormap('inferno')
+end
 % save
 print([xday_folder filesep 'cell_transitions_binarymap'], '-dpng');
 
