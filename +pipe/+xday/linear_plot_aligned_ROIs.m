@@ -35,11 +35,10 @@ if isprop(obj, 'bridgealignment')
 elseif isprop(obj, 'xdayalignment')
     % Unpack all masks into filtermask tensors
     master_masks = {};
-    masks_warped = zeros(sz(1), sz(2), length(obj.final_dates));
     for i = 1:length(obj.final_dates)
         masks = obj.masks_original(:,:,i);
         top_ind = max(masks(:));
-        masks_tensor = zeros(sz(1), sz(2), top_ind);
+        masks_tensor = zeros(top_ind, sz(1), sz(2));
         for k = 1:top_ind
             bin_mask = masks == k;
             warp_mask = imwarp(bin_mask, obj.warpfields{i});
@@ -54,9 +53,7 @@ elseif isprop(obj, 'xdayalignment')
                 fake_pixel_ind = randi([1 sz(2)], 1, 1);
                 warp_mask(1, fake_pixel_ind) = 1;
             end
-            masks_tensor(:,:,k) = warp_mask;
-            masks_warped = masks_warped.*(warp_mask == 0);
-            masks_warped = masks_warped + (warp_mask.*k);
+            masks_tensor(k,:,:) = warp_mask;
         end
         master_masks{i} = masks_tensor; 
     end
@@ -67,8 +64,7 @@ end
 % define minor variables/params 
 frame = 20; % # pixels away from centroid to define corner of crop
 crop = frame*2; % full size of cropped region
-sz_big = size(obj.masks_warped); % find the size of a single mask/image frame 
-sz_big = sz_big(1:2);
+
 % define major variables
 if isprop(obj, 'bridgealignment')
     xday_scores = obj.bridgealignment.cell_scores;
@@ -88,7 +84,7 @@ my_ROIs = my_ROIs(nan_free_vec,:);
 mn_cent = mn_cent(:,nan_free_vec);
 
 % calculate the size of your image grid to match the aspect ratio of a 2p frame 
-ratio = sz_big(1)/sz_big(2);
+ratio = sz(1)/sz(2);
 golden_num = sqrt(size(my_ROIs, 1)/ratio);
 x_dim = ceil(golden_num);
 y_dim = ceil(ratio*golden_num);
