@@ -30,7 +30,7 @@ masks_warped = zeros(sz(1), sz(2), length(obj.final_dates));
 for i = 1:length(obj.final_dates)
     masks = masks_original(:,:,i);
     top_ind = max(masks(:));
-    masks_tensor = zeros(sz(1), sz(2), top_ind);
+    masks_tensor = zeros(top_ind, sz(1), sz(2));
     for k = 1:top_ind
         bin_mask = masks == k;
         warp_mask = imwarp(bin_mask, obj.warpfields{i});
@@ -45,9 +45,9 @@ for i = 1:length(obj.final_dates)
             fake_pixel_ind = randi([1 sz(2)], 1, 1);
             warp_mask(1, fake_pixel_ind) = 1;
         end
-        masks_tensor(:,:,k) = warp_mask;
-        masks_warped = masks_warped.*(warp_mask == 0);
-        masks_warped = masks_warped + (warp_mask.*k);
+        masks_tensor(k,:,:) = warp_mask;
+        masks_warped(:,:,i) = masks_warped(:,:,i).*(warp_mask == 0);
+        masks_warped(:,:,i) = masks_warped(:,:,i) + (warp_mask.*k);
     end
     filtermasks{i} = masks_tensor; 
 end
