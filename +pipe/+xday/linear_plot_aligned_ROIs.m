@@ -20,6 +20,15 @@ end
 %% Load mean images, already warped
 warped_images = pipe.io.read_tiff([obj.savedir '\FOV_registered_to_day_' num2str(obj.warptarget) '.tif']);
 
+% get frame size
+if ~isfield(obj.pars, 'sz')
+    sbxpath = pipe.path(obj.mouse, obj.final_dates(1), obj.final_runs{1}(end), 'sbx', obj.pars.server);
+    info = pipe.metadata(sbxpath);
+    sz = info.sz;
+else
+    sz = obj.pars.sz;
+end
+
 %% Unpack masks
 if isprop(obj, 'bridgealignment')
     % [master_masks] = UnwrapBridgeMasks(obj);
