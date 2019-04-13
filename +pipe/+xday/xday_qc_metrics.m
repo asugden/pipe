@@ -39,7 +39,7 @@ end
 
 %% set your index variables
 xday_scores = obj.xdayalignment.cell_scores;
-xday_inds = obj.xDayAlignment.cell_to_index_map;
+xday_inds = obj.xdayalignment.cell_to_index_map;
 xday_inds = xday_inds(xday_scores >= cell_score_threshold,:);
 
 % define major variables
