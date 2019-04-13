@@ -29,13 +29,13 @@ function write_simpcell(mouse, date, run, varargin)
     % Iterate over every run
     if length(run) > 1
         for r = run
-            pipe.io.simpcell(mouse, date, r, p);
+            pipe.io.write_simpcell(mouse, date, r, p);
         end
     end
     
     %% The version number to be saved
     
-    version = 1.0;
+    version = 2.0;
 
     %% Check if function should be run and load all essential data
     
@@ -50,7 +50,13 @@ function write_simpcell(mouse, date, run, varargin)
     end
     
     % And initalize names of variables to be saved
-    savevars = {'version'};
+    preprocess_pars = struct('unknown', true);
+    postprocess_pars = struct('unknown', true);
+    
+    if isfield(gd, 'preprocess_pars'), preprocess_pars = gd.preprocess_pars; end
+    if isfield(gd, 'postprocess_pars'), postprocess_pars = gd.postprocess_pars; end
+    
+    savevars = {'version', 'preprocess_pars', 'postprocess_pars'};
     if ~isempty(p.tags)
         tags = p.tags;
         savevars{end+1} = 'tags';
@@ -59,7 +65,7 @@ function write_simpcell(mouse, date, run, varargin)
     %% Get dFF and recording values
     
     savevars = [savevars {'framerate', 'ncells', 'nframes', 'neuropil',...
-                          'dff', 'centroid', 'masks'}];
+                          'dff', 'centroid', 'masks', 'weighted_masks'}];
     if p.raw, savevars{end+1} = 'raw'; end
     if p.f0, savevars{end+1} = 'f0'; end
     
@@ -76,6 +82,7 @@ function write_simpcell(mouse, date, run, varargin)
     raw = zeros(ncells, nframes, 'single');
     centroid = zeros(ncells, 2, 'single');
     
+    weighted_masks = zeros(info.height, info.width, 'single');
     if ncells > 255
         masks = zeros(info.height, info.width, 'uint16');
     else
@@ -90,11 +97,14 @@ function write_simpcell(mouse, date, run, varargin)
         
         if isfield(gd.cellsort(i), 'binmask')
             mask = gd.cellsort(i).binmask;
+            wmask = gd.cellsort(i).mask;
         else
             mask = gd.cellsort(i).mask;
+            wmask = gd.cellsort(i).weights;
         end
         
         masks(mask') = i;
+        weighted_masks(mask') = wmask(mask)';
         
         centr = regionprops(mask);
         if ~isempty(centr)
@@ -160,17 +170,7 @@ function write_simpcell(mouse, date, run, varargin)
     
     if p.deconvolved
         savevars{end+1} = 'deconvolved';
-        
-        decon_path = pipe.path(mouse, date, run, 'decon', p.server);
-        if isempty(decon_path)
-            display('Deconvolving signals...')
-            deconvolved = pipe.proc.deconvolve(dff);
-            dpath = pipe.path(mouse, date, run, 'decon', p.server, 'estimate', true);
-            save(dpath, 'deconvolved');
-        else
-            decon = load(decon_path, '-mat');
-            deconvolved = single(decon.deconvolved);
-        end
+        deconvolved = pipe.pull.deconvolve(mouse, date, run, p.server);
     end
     
     %% Behavioral data
@@ -237,7 +237,7 @@ function out = localMatchPhotometry2P(frames, photometry, sampling_rate, nframes
 %   the onsets of 2p frames
 
     % Find the onsets if 2-photon frames
-    onsets = find(diff(ephys.frames2p > 2.5) == 1);
+    onsets = find(diff(frames > 2.5) == 1);
     donsets = diff(onsets);
     sampling_2p = sampling_rate/mean(donsets);
     
@@ -274,3 +274,35 @@ function out = localMatchPhotometry2P(frames, photometry, sampling_rate, nframes
         out = [out appendarr];
     end
 end
+
+
+function out = percentiledff(vec, fps, time_window, percentile)
+% PERCENTILEDFF Return a dff with the 10th percentile subtracted across a
+%   default 32-second window
+
+    % Default values from Rohan and Christian
+    % time_window is moving window of X seconds - 
+    % calculate f0 at time window prior to each frame
+    if nargin < 3, time_window = 32; end
+    if nargin < 4, percentile = 10; end
+
+    nframes = length(vec);
+    nROIs = 1;
+
+    % Now calculate dFF using axon method
+    time_window_frame = round(time_window*fps);
+
+    f0 = nan(1, nframes);
+    for i = 1:nframes
+        if i <= time_window_frame
+            frames = vec(1:time_window_frame);
+            f0(i) = prctile(frames, percentile, 2);
+        else
+            frames = vec(i - time_window_frame:i-1);
+            f0(i) = prctile(frames, percentile, 2);
+        end
+    end
+    
+    out = (vec - f0)./f0; 
+end
+

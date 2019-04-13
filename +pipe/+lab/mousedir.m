@@ -28,7 +28,7 @@ function out = mousedir(mouse, server)
     
     % Allows for an extra folder layer after scanbase.
     % Could work for any server.
-    if strcmpi(server, 'anastasia')
+    if strcmpi(server, 'anastasia') || strcmpi(server, 'nasquatch')
         fs = dir(scanbase);
         for i=1:length(fs)
             test_dir = fullfile(scanbase, fs(i).name, mouse);

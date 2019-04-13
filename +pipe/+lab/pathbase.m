@@ -37,6 +37,8 @@ function base = pathbase(server, jobdb_only)
             base = '\\megatron\2photon\scan\';
         elseif strcmpi(server, 'anastasia')
             base = '\\anastasia\data\2p\';
+        elseif strcmpi(server, 'nasquatch')
+            base = '\\nasquatch\data\2p\';
         elseif strcmpi(server, 'atlas')
             base = '\\atlas\twophoton_data\2photon\raw\';
         elseif strcmpi(server, 'beastmode')
