@@ -3,7 +3,7 @@ function out = dates(mouse, server)
 
     if nargin < 2, server = []; end
 
-    mousedir = fullfile(pipe.lab.pathbase(server), mouse);
+    mousedir = pipe.lab.mousedir(mouse, server);
     pattern = ['^\d{6}_' mouse '.*'];
     
     out = [];
