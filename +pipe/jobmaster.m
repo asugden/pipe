@@ -91,7 +91,7 @@ function jobmaster(varargin)
                         
                         % Write error info to file
                         fid = fopen(fullfile(path_error, [fname '.log']), 'w+');
-                        fprintf(fid, 'Job ran on %s', pipe.misc.hostname);
+                        fprintf(fid, 'Job ran on %s\n', pipe.misc.hostname);
                         fprintf(fid, '%s', err.getReport('extended', 'hyperlinks', 'off'));
                         fclose(fid);
                     end
@@ -111,7 +111,7 @@ function jobmaster(varargin)
                         
                         % Write error info to file
                         fid = fopen(fullfile(path_error, [fname '.log']), 'w+');
-                        fprintf(fid, 'Job ran on %s', pipe.misc.hostname);
+                        fprintf(fid, 'Job ran on %s\n', pipe.misc.hostname);
                         fprintf(fid, '%s', err.getReport('extended', 'hyperlinks', 'off'));
                         fclose(fid);
                     end
