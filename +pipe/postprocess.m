@@ -48,18 +48,18 @@ function postprocess(mouse, date, varargin)
     if isempty(p.runs), p.runs = pipe.lab.runs(mouse, date, p.server); end
     if ~isnumeric(date), date = str2num(date); end
     
-    % Prefer cellclicking, but fall back on icamasks
-    % Also, will only work if ICA file exists
-    if isempty(p.icapath)
-        if p.icarun < 0, p.icarun = p.runs(end); end
-        icapath = pipe.path(mouse, date, p.icarun, 'ica', p.server);
-        if isempty(icapath)
-            error('ICA not yet created for %s %d %02i. Try pipe.preprocess.', mouse, date, p.icarun);
-        end
+    % Set icapath
+    % Priority: p.icapath > p.icarun > runs(end)
+    if ~isempty(p.icapath)
+        icapath = p.icapath;
     else
         if p.icarun < 0
-            error('ICA run number not set (p.icarun)');
+            p.icarun = p.runs(end);
         end
+        icapath = pipe.path(mouse, date, p.icarun, 'ica', p.server);
+    end
+    if isempty(icapath) || ~exists(icapath, 'file')
+        error('ICA not yet created for %s %d %02i. Try pipe.preprocess.', mouse, date, p.icarun);
     end
     
      %% Save job if necessary
@@ -96,8 +96,6 @@ function postprocess(mouse, date, varargin)
     
     %% Deal with old formats
     
-    p.icapath = pipe.path(mouse, date, p.icarun, 'ica', p.server);
-    
     p.legacy_clicking_format = false;
     [seld, erosions] = pipe.pull.clicked_from_server(mouse, date, p.icarun);
     if isempty(seld)
@@ -116,7 +114,7 @@ function postprocess(mouse, date, varargin)
     
     if ~p.legacy_clicking_format
         % Get image masks
-        ica = load(p.icapath, '-mat');
+        ica = load(icapath, '-mat');
         masks = cell(1, length(erosions));
         axons = false;
         if isfield(ica.icaguidata', 'pars') && isfield(ica.icaguidata.pars, 'axons')
