@@ -42,7 +42,7 @@ function update_simpcells(mouse, varargin)
                         re_pull = true;
                     else
                         file = dir(sigpath);
-                        if datenum(file.date) > datenum(2018, 08, 01)  % Very conservative estimate- pip3 had not been written then
+                        if datenum(file.date) > datenum(2018, 08, 01)  % Very conservative estimate- pipe had not been written then
                             sig = load(sigpath, '-mat');
                             if ~isfield(sig, 'updated_code') || sig.updated_code < 190401
                                 re_pull = true;

@@ -81,7 +81,7 @@ function postprocess(mouse, date, varargin)
         % And save
         job_path = pipe.lab.jobdb([], p.priority);
         job = 'postprocess';
-        time = timestamp();
+        time = pipe.misc.timestamp();
         user = getenv('username');
         extra = '';
         if ~isempty(mouse)
@@ -92,7 +92,7 @@ function postprocess(mouse, date, varargin)
         end
 
         save(sprintf('%s\\%s_%s_%s%s.mat', job_path, ...
-            timestamp(), user, job, extra), 'mouse', 'date', 'job', ...
+            pipe.misc.timestamp(), user, job, extra), 'mouse', 'date', 'job', ...
             'time', 'user', 'pars');
         return;
     end
