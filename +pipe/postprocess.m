@@ -52,13 +52,16 @@ function postprocess(mouse, date, varargin)
     % Priority: p.icapath > p.icarun > runs(end)
     if ~isempty(p.icapath)
         icapath = p.icapath;
+        if p.icarun < 0
+            error('When passing in icapath, must also pass in icarun.');
+        end
     else
         if p.icarun < 0
             p.icarun = p.runs(end);
         end
         icapath = pipe.path(mouse, date, p.icarun, 'ica', p.server);
     end
-    if isempty(icapath) || ~exists(icapath, 'file')
+    if isempty(icapath) || ~exist(icapath, 'file')
         error('ICA not yet created for %s %d %02i. Try pipe.preprocess.', mouse, date, p.icarun);
     end
     
@@ -97,7 +100,7 @@ function postprocess(mouse, date, varargin)
     %% Deal with old formats
     
     p.legacy_clicking_format = false;
-    [seld, erosions] = pipe.pull.clicked_from_server(mouse, date, p.icarun);
+    [seld, erosions] = pipe.pull.clicked_from_server(mouse, date, p.icarun, icapath);
     if isempty(seld)
         icamaskspath = pipe.path(mouse, date, p.icarun, 'icamasks', p.server);
         if ~isempty(icamaskspath)
