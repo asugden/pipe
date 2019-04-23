@@ -11,7 +11,7 @@ p.CaseSensitive = false;
 
 % default params
 addOptional(p, 'save_tag', []);  % -- Add additional text to distinguish distinct alignments
-addOptional(p, 'force', false);  % -- Only save over 
+addOptional(p, 'force', false);  % -- Don't save over existing files by default
 
 % parse
 parse(p, varargin{:});
