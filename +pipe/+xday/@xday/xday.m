@@ -12,15 +12,17 @@ classdef xday < handle
     %        Validate registered FOVs.
     % step 4 --> obj.finalizetarget(obj, bad_days_to_keep, matched_days)
     %        (only if step 3 had bad_days) Fix registration hiccups.
-    % step 5 --> obj.align(obj, varargin)
-    %        
+    % step 5.0 --> obj.align(obj, varargin)
+    %        Align warped masks using CellReg algorithm.
+    % step 6 --> obj.getids(obj, varargin)
+    %        Write cell id and cell score .txt files for xday alignments.
     % 
     % PLOTTING (outside of class, see pipe.xday)
     % --------
-    % step 6 --> linear_plot_aligned_ROIs(obj, cell_score_threshold)
+    % step 5.1 --> linear_plot_aligned_ROIs(obj, cell_score_threshold)
     %        Plot each ROI aligned across days cropped around 
     %        mean centroid.
-    % step 7 --> xday_qc_metrics(obj, cell_score_threshold)
+    % step 5.2 --> xday_qc_metrics(obj, cell_score_threshold)
     %        Plot a number of simple metrics to check the quality of
     %        your alignments. 
     
@@ -50,6 +52,7 @@ classdef xday < handle
         besttarget(obj, best_day, bad_days)
         finalizetarget(obj, bad_days_to_keep, matched_days)
         align(obj)
+        getids(obj, varargin)
         
         function obj = xday(mouse, varargin)
             % Initialization step. Default is to use all dates in
