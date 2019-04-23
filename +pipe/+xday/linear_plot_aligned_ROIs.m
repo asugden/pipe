@@ -18,7 +18,7 @@ if ~exist(xday_folder, 'dir')
 end
 
 %% Load mean images, already warped
-warped_images = pipe.io.read_tiff([obj.savedir '\FOV_registered_to_day_' num2str(obj.warptarget) '.tif']);
+warped_images = pipe.io.read_tiff([obj.savedir '\FOV_registered_to_day_' num2str(obj.warptarget) '_final.tif']);
 
 % get frame size
 if ~isfield(obj.pars, 'sz')
@@ -153,7 +153,7 @@ for day_num = 1:size(my_ROIs, 2)
     for cell_num = 1:size(my_ROIs, 1)
         temp_cent = mn_cent(:, cell_num); % use the mean centroid to crop images
         x1 = temp_cent(1) - frame + pad_sz;
-        y1 = temp_cent(2) - frame+ pad_sz;
+        y1 = temp_cent(2) - frame + pad_sz;
         pad_warp = padarray(warped_images(:,:,day_num), [pad_sz pad_sz], 0, 'both');
         img = imcrop(pad_warp,[x1 y1 crop-1 crop-1]);
         daily_masks(:,:,cell_num) = img;
