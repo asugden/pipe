@@ -31,7 +31,11 @@ if nargin < 3 || isempty(bad_days)
 
     % write tiff stack registered to best_day
     pipe.io.write_tiff(RegMov,[obj.savedir filesep ...
-        'FOV_registered_to_day_' num2str(best_day) '.tif'])
+        'FOV_registered_to_day_' num2str(best_day) '_final.tif'])
+
+    % write tiff stack registered to best_day
+    pipe.io.write_tiff(UnregMov,[obj.savedir filesep ...
+        'FOV_NONregistered_to_day_' num2str(best_day) '_final.tif'])
 
     % add finalized warpfields to xday object
     obj.warpfields = AWF{best_day};
