@@ -10,7 +10,7 @@ classdef xday < handle
     %        Register FOVs using imregdemons. 
     % step 3 --> obj.besttarget(obj, best_day, bad_days)
     %        Validate registered FOVs.
-    % step 4 --> obj.(obj, bad_days_to_keep, matched_days)
+    % step 4 --> obj.finalizetarget(obj, bad_days_to_keep, matched_days)
     %        (only if step 3 had bad_days) Fix registration hiccups.
     % step 5 --> obj.align(obj, varargin)
     %        
