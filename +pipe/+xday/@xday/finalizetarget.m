@@ -67,7 +67,7 @@ end
 
 % write tiff stacks of final results pre and post registration
 pipe.io.write_tiff(regmov,[obj.savedir filesep ...
-    'FOV_registered_to_day_' num2str(obj.warptarget) '.tif']);
+    'FOV_registered_to_day_' num2str(obj.warptarget) '_final.tif']);
 pipe.io.write_tiff(unregmov,[obj.savedir filesep ...
     'FOV_NONregistered_to_day_' num2str(obj.warptarget) '_final.tif']);
 
