@@ -27,7 +27,6 @@ end
 % get alignment variables
 index_map = obj.xdayalignment.cell_to_index_map;
 cell_scores = obj.xdayalignment.cell_scores;
-metadata = p.track.metadata;
 masks = obj.masks_original;
 
 %% Loop through days and create file with unique IDs
