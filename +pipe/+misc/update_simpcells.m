@@ -42,7 +42,7 @@ function update_simpcells(mouse, varargin)
                         re_pull = true;
                     else
                         file = dir(sigpath);
-                        if datenum(file.date) > datenum(2018, 08, 01)  % Very conservative estimate- pip3 had not been written then
+                        if datenum(file.date) > datenum(2018, 08, 01)  % Very conservative estimate- pipe had not been written then
                             sig = load(sigpath, '-mat');
                             if ~isfield(sig, 'updated_code') || sig.updated_code < 190401
                                 re_pull = true;
@@ -52,11 +52,35 @@ function update_simpcells(mouse, varargin)
                 end
 
                 if ~re_pull
-                    re_simpcell = true;
-                    sc = pipe.load(mouse, date, run, 'simpcell', p.server, 'error', false);
+                    re_simpcell = false;
+                    
+                    sig_path = pipe.path(mouse, date, run, 'signals', p.server);
+                    % Should not be possible for sig_path to be empty here
+                    sig_dir = dir(sig_path);
+                    decon_path = pipe.path(mouse, date, run, 'decon', p.server);
+                    if isempty(decon_path)
+                        decon_dir = [];
+                    else
+                        decon_dir = dir(decon_path);
+                    end
+                    simp_path = pipe.path(mouse, date, run, 'simpcell', p.server);
+                    if isempty(simp_path)
+                        simp_dir = [];
+                    else
+                        simp_dir = dir(simp_path);
+                    end
+                    
+                    if isempty(decon_dir) || isempty(simp_dir) || ...
+                            datenum(sig_dir.date) > datenum(decon_dir.date) || ...
+                            datenum(decon_dir.date) > datenum(simp_dir.date)
+                        % Pulling decon for simpcell automaticaly checks
+                        % update dates, so will also re-run decon if
+                        % needed.
+                        re_simpcell = true;
+                    else
+                        sc = pipe.load(mouse, date, run, 'simpcell', p.server, 'error', false);
 
-                    if ~isempty(sc)
-                        if isfield(sc, 'version') && sc.version >= 2.0
+                        if ~isempty(sc) && isfield(sc, 'version') && sc.version >= 2.0
                             re_simpcell = false;
                         end
                     end

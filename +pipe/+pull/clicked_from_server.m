@@ -1,7 +1,8 @@
-function [selected, erosions] = clicked_from_server(mouse, date, run)
+function [selected, erosions] = clicked_from_server(mouse, date, run, icapath)
 % CLICKED_FROM_SERVER Get a list of which ROIs were "clicked" or selected
 %   and what the preferred erosions were.
-%   axon flag allows discontinuous ROIs
+%   axon flag allows discontinuous ROIs'
+    if nargin < 4, icapath = []; end
 
     % Account for using any server
     datapath = pipe.lab.webserver(true);
@@ -35,6 +36,21 @@ function [selected, erosions] = clicked_from_server(mouse, date, run)
     erosions = [];
     
     if isempty(path), return; end
+    
+    if ~isempty(icapath)
+        % Compare mod times of the click file and ica data to make sure that
+        % the click file is newer.
+        click_dir = dir(path);
+        click_mod_time = click_dir.datenum;
+        icadata_dir = dir(icapath);
+        icadata_mod_time = icadata_dir.datenum;
+        if icadata_mod_time > click_mod_time
+            fprintf('ICA data newer than click file, needs to be re-clicked: %s %d\n', mouse, date);
+            return
+        end
+    else
+        fprintf('Unknown icapath, not checking for data consistency: %s %d\n', mouse, date);
+    end
 
     fp = fopen(path, 'r');
     filevals = fscanf(fp, '%i\t%f\n');

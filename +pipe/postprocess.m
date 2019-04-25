@@ -3,7 +3,6 @@ function postprocess(mouse, date, varargin)
 %   run simplifycellsort
 
     p = inputParser;
-    % ---------------------------------------------------------------------
     addOptional(p, 'runs', []);  % A list of runs to use. If empty, use all runs
     addOptional(p, 'server', []);  % Server on which data resides
     addOptional(p, 'force', false);  % Overwrite files if they exist
@@ -49,18 +48,21 @@ function postprocess(mouse, date, varargin)
     if isempty(p.runs), p.runs = pipe.lab.runs(mouse, date, p.server); end
     if ~isnumeric(date), date = str2num(date); end
     
-    % Prefer cellclicking, but fall back on icamasks
-    % Also, will only work if ICA file exists
-    if isempty(p.icapath)
-        if p.icarun < 0, p.icarun = p.runs(end); end
-        icapath = pipe.path(mouse, date, p.icarun, 'ica', p.server);
-        if isempty(icapath)
-            error('ICA not yet created for %s %d %02i. Try pipe.preprocess.', mouse, date, p.icarun);
+    % Set icapath
+    % Priority: p.icapath > p.icarun > runs(end)
+    if ~isempty(p.icapath)
+        icapath = p.icapath;
+        if p.icarun < 0
+            error('When passing in icapath, must also pass in icarun.');
         end
     else
         if p.icarun < 0
-            error('ICA run number not set (p.icarun)');
+            p.icarun = p.runs(end);
         end
+        icapath = pipe.path(mouse, date, p.icarun, 'ica', p.server);
+    end
+    if isempty(icapath) || ~exist(icapath, 'file')
+        error('ICA not yet created for %s %d %02i. Try pipe.preprocess.', mouse, date, p.icarun);
     end
     
      %% Save job if necessary
@@ -79,7 +81,7 @@ function postprocess(mouse, date, varargin)
         % And save
         job_path = pipe.lab.jobdb([], p.priority);
         job = 'postprocess';
-        time = timestamp();
+        time = pipe.misc.timestamp();
         user = getenv('username');
         extra = '';
         if ~isempty(mouse)
@@ -90,17 +92,15 @@ function postprocess(mouse, date, varargin)
         end
 
         save(sprintf('%s\\%s_%s_%s%s.mat', job_path, ...
-            timestamp(), user, job, extra), 'mouse', 'date', 'job', ...
+            pipe.misc.timestamp(), user, job, extra), 'mouse', 'date', 'job', ...
             'time', 'user', 'pars');
         return;
     end
     
     %% Deal with old formats
     
-    p.icapath = pipe.path(mouse, date, p.icarun, 'ica', p.server);
-    
     p.legacy_clicking_format = false;
-    [seld, erosions] = pipe.pull.clicked_from_server(mouse, date, p.icarun);
+    [seld, erosions] = pipe.pull.clicked_from_server(mouse, date, p.icarun, icapath);
     if isempty(seld)
         icamaskspath = pipe.path(mouse, date, p.icarun, 'icamasks', p.server);
         if ~isempty(icamaskspath)
@@ -117,7 +117,7 @@ function postprocess(mouse, date, varargin)
     
     if ~p.legacy_clicking_format
         % Get image masks
-        ica = load(p.icapath, '-mat');
+        ica = load(icapath, '-mat');
         masks = cell(1, length(erosions));
         axons = false;
         if isfield(ica.icaguidata', 'pars') && isfield(ica.icaguidata.pars, 'axons')

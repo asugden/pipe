@@ -103,10 +103,6 @@ BHV.FileVersion = fread(fidbhv, 1, 'double');
 if BHV.FileVersion < 1.5
     error('*** BHV files of version < 1.5 are no longer supported ***');
 end
-writeversion = bhv_write(4, 0, 0); %check for the currently-installed version of "bhv_write" as an indicator if the file version being read may be incompatible
-if BHV.FileVersion > writeversion
-    disp('>>> WARNING: BHV file being read may be newer and therefore incompatible with this version of "bhv_read" <<<')
-end
 
 BHV.StartTime = deblank(char(fread(fidbhv, 32, 'uchar')'));
 BHV.ExperimentName = deblank(char(fread(fidbhv, 128, 'uchar')'));
