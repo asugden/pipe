@@ -209,14 +209,20 @@ function [dx, dy, area, radii, quality] = position(eye, mask, cx, cy, varargin)
     area = movmedian(area, 5);
     
     % Calculate a moving mean
+    nframes = length(area);
     baseline = zeros(1, nframes);
     baseline(:) = nan;
     chunksize = 1000;
-    nchunks = ceil(nframes/p.chunksize);
+    nchunks = ceil(nframes/chunksize);
+    
+    while nframes - (nchunks-1)*chunksize < 10
+        chunksize = chunksize + 2;
+        nchunks = ceil(nframes/chunksize);
+    end
     
     for c = 1:nchunks
-        mn = (c - 1)*p.chunksize + 1;
-        mx = min(c*p.chunksize, nframes);
+        mn = (c - 1)*chunksize + 1;
+        mx = min(c*chunksize, nframes);
         val = nanmean(area(mn:mx));
         baseline(mn + floor(chunksize/2.0)) = val;
         

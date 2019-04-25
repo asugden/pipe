@@ -21,11 +21,25 @@ function masks(mouse, date, runs, server, force)
             im500s = [sbxpath(1:end-4) '-im500s.tif'];
             
             run_masks = true;
+            missing_bwmask = true;
+            missing_cxcy = true;
+            
             save_path = pipe.path(mouse, date, run, 'pmask', server, 'estimate', true);
             if exist(save_path) && ~force
                 pmask = load(save_path, '-mat');
                 if isfield(pmask, 'version') && pmask.version >= 2
                     run_masks = false;
+                else
+                    if isfield(pmask, 'bwmask')
+                        missing_bwmask = false;
+                        bwmask = pmask.bwmask;
+                    end
+                    
+                    if isfield(pmask, 'cx') && isfield(pmask, 'cy')
+                        missing_cxcy = false;
+                        cx = pmask.cx;
+                        cy = pmask.cy;
+                    end
                 end
             end
 
@@ -33,35 +47,39 @@ function masks(mouse, date, runs, server, force)
                 % First, get the masks
                 im = pipe.io.read_tiff(avim);
 
-                if ~isempty(bwmask)
-                    temp = figure;
-                    subplot(1, 2, 1);
-                    imagesc(im);
-                    colormap('Gray');
-                    subplot(1, 2, 2);
-                    imagesc(im.*bwmask);
-                    colormap('Gray');
-                    button = questdlg('Does the previous mask overlap with the pupil?', ...
-                        'No', 'Yes');
-                    if strcmp(button, 'No')
-                        bwmask = [];
+                if missing_bwmask
+                    if ~isempty(bwmask)
+                        temp = figure;
+                        subplot(1, 2, 1);
+                        imagesc(im);
+                        colormap('Gray');
+                        subplot(1, 2, 2);
+                        imagesc(im.*bwmask);
+                        colormap('Gray');
+                        button = questdlg('Does the previous mask overlap with the pupil?', ...
+                            'No', 'Yes');
+                        if strcmp(button, 'No')
+                            bwmask = [];
+                        end
+                        close(temp);
                     end
-                    close(temp);
-                end
 
-                if isempty(bwmask)
-                    % uiwait(msgbox('Click in an outline around the visible eyeball. Double click within to finish.'));
-                    figure;
-                    title('Click around eyeball. Double-click to finish.');
-                    bwmask = roipoly(im);
+                    if isempty(bwmask)
+                        % uiwait(msgbox('Click in an outline around the visible eyeball. Double click within to finish.'));
+                        figure;
+                        title('Click around eyeball. Double-click to finish.');
+                        bwmask = roipoly(im);
+                    end
                 end
 
                 % Then, get the cx, cy
                 eyes = pipe.io.read_tiff(im500s);
-                imagesc(eyes(:, :, 1), [0 100]);
-                title('Select the center of the eye');
-                [cx, cy] = ginput(1);
-                close(gcf());
+                if missing_cxcy
+                    imagesc(eyes(:, :, 1), [0 100]);
+                    title('Select the center of the eye');
+                    [cx, cy] = ginput(1);
+                    close(gcf());
+                end
                 
                 % Finally, find the times when the eye is closed
                 eyes = pipe.proc.binxy(eyes, 4);
@@ -86,6 +104,7 @@ function masks(mouse, date, runs, server, force)
                 sleep = figure;
                 imagesc(comb_images);
                 colormap('Gray');
+                title('Click on closed eyes. Enter to close.');
                 hold on;
                 button = 1;
                 while button <= 3   % read ginputs until a mouse right-button occurs

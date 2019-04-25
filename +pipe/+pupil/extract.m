@@ -3,6 +3,8 @@ function [dx, dy, psum, area, quality] = extract(mouse, date, run, varargin)
 %UNTITLED11 Summary of this function goes here
 %   Detailed explanation goes here
 
+    if nargin < 3, error('Missing run parameter'); end
+
     p = inputParser;
     % ---------------------------------------------------------------------
     % Most important variables
