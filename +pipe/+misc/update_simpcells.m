@@ -4,6 +4,7 @@ function update_simpcells(mouse, varargin)
     % ---------------------------------------------------------------------
     % Most important variables
     addOptional(p, 'dates', []);          % Defaults to running across all dates
+    addOptional(p, 'runs', []);           % Defaults to all runs in directory(ies)
     addOptional(p, 'server', []);         % Server name, empty if the same server
     addOptional(p, 'ignore_signals', false); % If true, do not update signals files (Andrew)
     addOptional(p, 'report_only', false); % Report, don't rerun, bad dates if true
@@ -29,6 +30,9 @@ function update_simpcells(mouse, varargin)
     
     for date = p.dates
         runs = pipe.lab.runs(mouse, date, p.server);
+        if ~isempty(p.runs)
+            runs = intersect(runs, p.runs);
+        end
         
         if pipe.pull.is_clicked(mouse, date, runs, p.server)
             % Catch a bug in processing
