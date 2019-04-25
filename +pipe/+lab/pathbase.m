@@ -23,6 +23,8 @@ function base = pathbase(server, jobdb_only)
             base = 'D:\2p_data\scan\';
         elseif strcmpi(hn, 'santiago')
             base = 'D:\2p_data\scan\';
+        elseif strcmpi(hn, 'camillo')
+            base = 'D:\2p_data\scan';
         end
     else
         if strcmpi(server, 'storage') && ~strcmpi(hn, 'megatron')
@@ -45,6 +47,8 @@ function base = pathbase(server, jobdb_only)
             base = '\\beastmode\twophoton_data\2photon\scan\';
         elseif strcmpi(server, 'beastbaby')
             base = '\\beastmode\E\twophoton_extra\2photon_extra\scan_extra\';
+        elseif strcmpi(server, 'camillo')
+            base = '\\camillo\2p_data\scan\';
         end
     end
 end
