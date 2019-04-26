@@ -9,6 +9,7 @@ function postprocess(mouse, date, varargin)
     addOptional(p, 'job', false);  % Set to true to run as a job, set to false to run immediately.
     addOptional(p, 'priority', 'med');  % Set the priority to be low, medium, or high. Default is medium.
     
+    addOptional(p, 'pupil', true);  % Extract pupil if not already extracted
     addOptional(p, 'weighted_signal', false);  % Use weighting for signals rather than binary masks
     addOptional(p, 'weighted_neuropil', false);  % Use weighting for neuropil rather than binary masks
     addOptional(p, 'deconvolve', true);  % Save a deconvolved version of each of the traces
@@ -67,6 +68,12 @@ function postprocess(mouse, date, varargin)
     
      %% Save job if necessary
     
+    if p.pupil
+        try
+            pipe.pupil.extract(mouse, date, p.runs);
+        end
+    end
+     
     if p.job && ~p.run_as_job
         % Convert parameters to struct
         pars = {};

@@ -16,7 +16,7 @@ function preprocess(mouse, date, varargin)
     addOptional(p, 'job', true);  % Set to true to run as a job, set to false to run immediately.
     addOptional(p, 'priority', 'med');  % Set the priority to be low, medium, or high. Default is medium.
     addOptional(p, 'server', []);  % Add in the server name as a string
-    % addOptional(p, 'pupil', false);  % Extract pupil diameter if possible
+    addOptional(p, 'pupil', true);  % Extract pupil diameter if possible
     addOptional(p, 'runs', []);  % Defaults to all runs in the directory
     addOptional(p, 'force', false);  % Overwrite files if they exist
     addOptional(p, 'pmt', 1, @isnumeric);  % Which PMT to use for analysis, 1-green, 2-red
@@ -258,13 +258,9 @@ function preprocess(mouse, date, varargin)
 
     %% Follow-up with optional images for checking
     
-%     if p.pupil
-%         if ~p.job
-%             sbxPupilMasks(mouse, date, runs, p.server);
-%         end
-%         
-%         sbxPupils(mouse, date, runs, p.server);
-%     end
+    if p.pupil && ~isempty(p.runs)
+        pipe.pupil.premasks(mouse, date, p.runs, p.server);
+    end
     
     if p.testimages
         for r = 1:length(sbxpaths)
