@@ -31,8 +31,8 @@ function [dx, dy, psum, area, quality] = extract(mouse, date, run, varargin)
     quality = [];
     
     % Load file if possible
-    save_path = pipe.path(mouse, date, run, 'pdiam', p.server);
-    if ~isempty(save_path) && ~p.force
+    save_path = pipe.path(mouse, date, run, 'pdiam', p.server, 'estimate', true);
+    if exist(save_path, 'file') && ~p.force
         out = load(save_path, '-mat');
         if isfield(out, 'version') && out.version >= 2
             dx = out.dx;
