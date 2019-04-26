@@ -9,6 +9,8 @@ function out = read_tiff(path, newType)
     [directory, name, ext] = fileparts(path);
     if directory(end) ~= '\' || directory(end) ~= '/', directory(end+1) = filesep; end
 
+    pipe.lab.runimagej();
+    
     td = ij.io.TiffDecoder(directory, [name ext]);
     tfi = td.getTiffInfo();
     fi = tfi(1);
