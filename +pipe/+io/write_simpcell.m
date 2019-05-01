@@ -148,7 +148,7 @@ function write_simpcell(mouse, date, run, varargin)
     
     if p.pupil
         savevars = [savevars, 'pupil_dx', 'pupil_dy', 'pupil_sum', 'pupil'];
-        [pupil_dx, pupil_dy, pupil_sum, pupil] = pipe.pupil.extract(mouse, date, run, p.server);
+        [pupil_dx, pupil_dy, pupil_sum, pupil] = pipe.pupil.extract(mouse, date, run, 'server', p.server);
     end
     
     
