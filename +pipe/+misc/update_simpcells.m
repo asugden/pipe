@@ -64,19 +64,22 @@ function update_simpcells(mouse, varargin)
                     end
                 end
             end
-            if re_pull
-                fprintf('Signals pull in progress, re-run later for remaining checks: %s %6i\n',
-                    mouse, date)
+            if re_pull && ~p.report_only
+                fprintf('Signals pull in progress, re-run later for remaining checks: %s %6i\n', ...
+                    mouse, date);
                 continue
-
+            end
             %
             % Check modification times and simpcells
             %
             re_simpcell = false;
             for run = runs
                 sig_path = pipe.path(mouse, date, run, 'signals', p.server);
-                % Should not be possible for sig_path to be empty here
-                sig_dir = dir(sig_path);
+                if isempty(sig_path)
+                    sig_dir = [];
+                else
+                    sig_dir = dir(sig_path);
+                end
                 decon_path = pipe.path(mouse, date, run, 'decon', p.server);
                 if isempty(decon_path)
                     decon_dir = [];
@@ -90,7 +93,7 @@ function update_simpcells(mouse, varargin)
                     simp_dir = dir(simp_path);
                 end
                 
-                if isempty(decon_dir) || isempty(simp_dir) || ...
+                if isempty(sig_dir) || isempty(decon_dir) || isempty(simp_dir) || ...
                         datenum(sig_dir.date) > datenum(decon_dir.date) || ...
                         datenum(decon_dir.date) > datenum(simp_dir.date)
                     % Pulling decon for simpcell automatically checks
@@ -109,8 +112,8 @@ function update_simpcells(mouse, varargin)
                     end
                 end
             end
-            if re_simpcell
-                fprintf('Simpcell re-write in progress, re-run later for remaining checks: %s %6i\n',
+            if re_simpcell && ~p.report_only
+                fprintf('Simpcell re-write in progress, re-run later for remaining checks: %s %6i\n', ...
                     mouse, date);
                 continue
             end
