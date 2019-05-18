@@ -66,19 +66,20 @@ function write_simpcell(mouse, date, run, varargin)
         savevars{end+1} = 'tags';
     end
     
-    %% Always load the signals file, since it includes useful info
-    % Might be able to skip this if it causes trouble
-    gd = pipe.load(mouse, date, run, 'signals', p.server, 'error', false);
-    if isempty(gd)
-        error(sprintf('Signals file not found for %s %s %03i', mouse, date, run));
+    %% Load the signals file if needed
+    if p.raw || p.f0 || p.dff || p.running || p.photometry
+        gd = pipe.load(mouse, date, run, 'signals', p.server, 'error', false);
+        if isempty(gd)
+            error(sprintf('Signals file not found for %s %s %03i', mouse, date, run));
+        end
+
+        ncells = int16(length(gd.cellsort) - 1);
+        nframes = int32(length(gd.cellsort(1).timecourse.dff_axon));
     end
 
-    ncells = int16(length(gd.cellsort) - 1);
-    nframes = int32(length(gd.cellsort(1).timecourse.dff_axon));
-        
+    
     %% Include imaging data
     if p.raw || p.f0 || p.dff
-        % And initalize names of variables to be saved
         preprocess_pars = struct('unknown', true);
         postprocess_pars = struct('unknown', true);
 
@@ -87,7 +88,7 @@ function write_simpcell(mouse, date, run, varargin)
 
         savevars = [savevars 'preprocess_pars' 'postprocess_pars'];
 
-        %% Get dFF and recording values
+        % Get dFF and recording values
 
         savevars = [savevars {'framerate', 'ncells', 'nframes', 'neuropil',...
                               'centroid', 'masks', 'weighted_masks'}];
@@ -147,9 +148,9 @@ function write_simpcell(mouse, date, run, varargin)
             end
         end
     end
+
     
-    %% Running, brain motion, and pupil
-    
+    %% Running, brain motion, and pupil    
     if p.running
         savevars = [savevars 'running'];
         % Load the rotary encoder running data, if possible
@@ -180,8 +181,7 @@ function write_simpcell(mouse, date, run, varargin)
     end
     
     
-     %% Brain forces
-    
+    %% Brain forces
     if p.brain_forces
         savevars = [savevars {'scaleml', 'scaleap', 'shearml', 'shearap', 'transml', 'transap'}];
         mot = pipe.proc.brain_forces(mouse, date, run, p.server);
@@ -195,11 +195,11 @@ function write_simpcell(mouse, date, run, varargin)
     
     
     %% Deconvolution
-    
     if p.deconvolved
         savevars{end+1} = 'deconvolved';
         deconvolved = pipe.pull.deconvolve(mouse, date, run, p.server);
     end
+
     
     %% Behavioral data
     if p.behavior
