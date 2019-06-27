@@ -1,6 +1,6 @@
 function save(path, varargin)
 %SBXSAVEALIGNEDSBX Save an aligned copy of the sbx file so that future
-%   reading and writing is dramatically sped up. Saved as path_reg.sbx
+%   reading and writing is dramatically sped up.
 
     p = inputParser;
     addOptional(p, 'extension', '.sbxreg');  % If adding extra title, requires '.' at beginning
@@ -37,15 +37,21 @@ function save(path, varargin)
     for c = 1:nchunks
         if info.nchan == 1
             data = pipe.imread(path, (c-1)*p.chunksize+1, p.chunksize, 1, [], ...
-                'register', true, 'registration_path', p.registration_path, 'ignore_sbxreg', true);
+                'register', true, ...
+                'registration_path', p.registration_path, ...
+                'ignore_sbxreg', true);
         else
             data1 = pipe.imread(path, (c-1)*p.chunksize+1, p.chunksize, 1, [], ...
-                'register', true, 'registration_path', p.registration_path, 'ignore_sbxreg', true);
+                'register', true, ...
+                'registration_path', p.registration_path, ...
+                'ignore_sbxreg', true);
             data = zeros(2, size(data1, 1), size(data1, 2), size(data1, 3));
             data(1, :, :, :) = data1;
             clear data1;
             data(2, :, :, :) = pipe.imread(path, (c-1)*p.chunksize+1, p.chunksize, 2, [], ...
-                'register', true, 'registration_path', p.registration_path, 'ignore_sbxreg', true);
+                'register', true, ...
+                'registration_path', p.registration_path, ...
+                'ignore_sbxreg', true);
         end
         
         rw.write(data);

@@ -7,10 +7,15 @@ function write_simpcell(mouse, date, run, varargin)
     % Most important variables
     addOptional(p, 'server', []);         % Server name, empty if the same server
     addOptional(p, 'force', false);       % If true, overwrite simpcell files
+    addOptional(p, 'append', false);      % If true, append fields to pre-existing simpcells. Still respects 'force', but now per-field.
+    addOptional(p, 'behavior', true);     % Include behavior/ML/onsets data
+    addOptional(p, 'running', true);      % Include running/quadrature data
     addOptional(p, 'raw', true);          % Include the raw data
     addOptional(p, 'f0', true);           % Include the running f0 baseline
+    addOptional(p, 'dff', true);          % Include the dff data
     addOptional(p, 'deconvolved', true);  % Deconvolve and include deconvolved traces if true
-    addOptional(p, 'pupil', true);        % Add pupil data
+    addOptional(p, 'pupil', true);        % Include pupil data
+    addOptional(p, 'brainmotion', true);  % Include brain motion
     addOptional(p, 'brain_forces', false);% Add the motion of the brain as forces
     addOptional(p, 'photometry', false);  % Add photometry data
     addOptional(p, 'photometry_fiber', 1);% Which photometry fiber(s) to include, can be array
@@ -41,110 +46,134 @@ function write_simpcell(mouse, date, run, varargin)
     
     % Make the simpcell path and check if it exists if necessary
     spath = pipe.path(mouse, date, run, 'simpcell', p.server, 'estimate', true);
-    if ~p.force && exist(spath), return; end
-    
-    % Load cellsort file
-    gd = pipe.load(mouse, date, run, 'signals', p.server, 'error', false);
-    if isempty(gd)
-        error(sprintf('Signals file not found for %s %s %03i', mouse, date, run));
+    if p.append && ~exist(spath, 'file')
+        fprintf('No simpcell found for append, writing new: %s %s %03i\n', mouse, date, run);
+        p.append = false;
+    elseif ~p.force && ~p.append && exist(spath, 'file')
+        return
     end
     
-    % And initalize names of variables to be saved
-    preprocess_pars = struct('unknown', true);
-    postprocess_pars = struct('unknown', true);
+    if p.append
+        % Don't update version string if we are appending data
+        savevars = {};
+    else
+        savevars = {'version'};
+    end
     
-    if isfield(gd, 'preprocess_pars'), preprocess_pars = gd.preprocess_pars; end
-    if isfield(gd, 'postprocess_pars'), postprocess_pars = gd.postprocess_pars; end
-    
-    savevars = {'version', 'preprocess_pars', 'postprocess_pars'};
+    %% Include tags
     if ~isempty(p.tags)
         tags = p.tags;
         savevars{end+1} = 'tags';
     end
     
-    %% Get dFF and recording values
-    
-    savevars = [savevars {'framerate', 'ncells', 'nframes', 'neuropil',...
-                          'dff', 'centroid', 'masks', 'weighted_masks'}];
-    if p.raw, savevars{end+1} = 'raw'; end
-    if p.f0, savevars{end+1} = 'f0'; end
-    
-    % Load info file and get framerate
-    info = pipe.metadata(pipe.path(mouse, date, run, 'sbx', p.server));
-    framerate = single(info.framerate);
-    
-    % Prep the output
-    ncells = int16(length(gd.cellsort) - 1);
-    nframes = int32(length(gd.cellsort(1).timecourse.dff_axon));
-    neuropil = single(gd.cellsort(end).timecourse.dff_axon);
-    dff = zeros(ncells, nframes, 'single');
-    f0 = zeros(ncells, nframes, 'single');
-    raw = zeros(ncells, nframes, 'single');
-    centroid = zeros(ncells, 2, 'single');
-    
-    weighted_masks = zeros(info.height, info.width, 'single');
-    if ncells > 255
-        masks = zeros(info.height, info.width, 'uint16');
-    else
-        masks = zeros(info.height, info.width, 'uint8');
-    end
-    
-    % Copy from cellsort
-    for i = 1:ncells
-        dff(i, :) = gd.cellsort(i).timecourse.dff_axon;
-        f0(i, :) = gd.cellsort(i).timecourse.f0_axon;
-        raw(i, :) = gd.cellsort(i).timecourse.raw;
-        
-        if isfield(gd.cellsort(i), 'binmask')
-            mask = gd.cellsort(i).binmask;
-            wmask = gd.cellsort(i).mask;
-        else
-            mask = gd.cellsort(i).mask;
-            wmask = gd.cellsort(i).weights;
-        end
-        
-        masks(mask') = i;
-        weighted_masks(mask') = wmask(mask)';
-        
-        centr = regionprops(mask);
-        if ~isempty(centr)
-            cx = [centr(1).Centroid(1)];
-            cy = [centr(1).Centroid(2)];
-            for j = 2:length(centr)
-                cx = [cx centr(j).Centroid(1)];
-                cy = [cy centr(j).Centroid(2)];
-            end
-            centroid(i, 1) = mean(cx);
-            centroid(i, 2) = mean(cy);
+    %% Load the signals file if needed
+    if p.raw || p.f0 || p.dff || p.running || p.photometry
+        gd = pipe.load(mouse, date, run, 'signals', p.server, 'error', false);
+        if isempty(gd)
+            error(sprintf('Signals file not found for %s %s %03i', mouse, date, run));
         end
 
-        if sum(dff(i, :)) == 0
-            fprintf('WARNING: Cell %i has a dff of all zeros')
-        end
-        
+        ncells = int16(length(gd.cellsort) - 1);
+        nframes = int32(length(gd.cellsort(1).timecourse.dff_axon));
     end
+
     
-    %% Running, brain motion, and pupil
-    
-    savevars = [savevars {'running', 'brainmotion'}];
-    
-    % Load the rotary encoder running data, if possible
-    running = [];
-    
-    quadfile = pipe.load(mouse, date, run, 'quad', p.server, 'error', false);
-    if ~isempty(quadfile)
-        running = quadfile.quad_data;
-        if length(running) == 2*nframes
-            running = running(1:2:length(running)) + running(2:2:length(running));
+    %% Include imaging data
+    if p.raw || p.f0 || p.dff
+        preprocess_pars = struct('unknown', true);
+        postprocess_pars = struct('unknown', true);
+
+        if isfield(gd, 'preprocess_pars'), preprocess_pars = gd.preprocess_pars; end
+        if isfield(gd, 'postprocess_pars'), postprocess_pars = gd.postprocess_pars; end
+
+        savevars = [savevars 'preprocess_pars' 'postprocess_pars'];
+
+        % Get dFF and recording values
+
+        savevars = [savevars {'framerate', 'ncells', 'nframes', 'neuropil',...
+                              'centroid', 'masks', 'weighted_masks'}];
+        if p.raw, savevars{end+1} = 'raw'; end
+        if p.f0, savevars{end+1} = 'f0'; end
+        if p.dff, savevars{end+1} = 'dff'; end
+
+        % Load info file and get framerate
+        info = pipe.metadata(pipe.path(mouse, date, run, 'sbx', p.server));
+        framerate = single(info.framerate);
+
+        % Prep the output
+        neuropil = single(gd.cellsort(end).timecourse.dff_axon);
+        dff = zeros(ncells, nframes, 'single');
+        f0 = zeros(ncells, nframes, 'single');
+        raw = zeros(ncells, nframes, 'single');
+        centroid = zeros(ncells, 2, 'single');
+
+        weighted_masks = zeros(info.height, info.width, 'single');
+        if ncells > 255
+            masks = zeros(info.height, info.width, 'uint16');
+        else
+            masks = zeros(info.height, info.width, 'uint8');
         end
-    else
-        quadfile = pipe.load(mouse, date, run, 'position', p.server, 'error', false);
+
+        % Copy from cellsort
+        for i = 1:ncells
+            dff(i, :) = gd.cellsort(i).timecourse.dff_axon;
+            f0(i, :) = gd.cellsort(i).timecourse.f0_axon;
+            raw(i, :) = gd.cellsort(i).timecourse.raw;
+
+            if isfield(gd.cellsort(i), 'binmask')
+                mask = gd.cellsort(i).binmask;
+                wmask = gd.cellsort(i).mask;
+            else
+                mask = gd.cellsort(i).mask;
+                wmask = gd.cellsort(i).weights;
+            end
+
+            masks(mask') = i;
+            weighted_masks(mask') = wmask(mask)';
+
+            centr = regionprops(mask);
+            if ~isempty(centr)
+                cx = [centr(1).Centroid(1)];
+                cy = [centr(1).Centroid(2)];
+                for j = 2:length(centr)
+                    cx = [cx centr(j).Centroid(1)];
+                    cy = [cy centr(j).Centroid(2)];
+                end
+                centroid(i, 1) = mean(cx);
+                centroid(i, 2) = mean(cy);
+            end
+
+            if sum(dff(i, :)) == 0
+                fprintf('WARNING: Cell %i has a dff of all zeros')
+            end
+        end
+    end
+
+    
+    %% Running, brain motion, and pupil    
+    if p.running
+        savevars = [savevars 'running'];
+        % Load the rotary encoder running data, if possible
+        running = [];
+
+        quadfile = pipe.load(mouse, date, run, 'quad', p.server, 'error', false);
         if ~isempty(quadfile)
-            running = quadfile.position;
+            running = quadfile.quad_data;
+            if length(running) == 2*nframes
+                running = running(1:2:length(running)) + running(2:2:length(running));
+            end
+        else
+            quadfile = pipe.load(mouse, date, run, 'position', p.server, 'error', false);
+            if ~isempty(quadfile)
+                running = quadfile.position;
+            end
         end
     end
-    
-    brainmotion = single(pipe.proc.brainposition(mouse, date, run, p.server));
+
+    if p.brainmotion
+        savevars = [savevars 'brainmotion'];
+        brainmotion = single(pipe.proc.brainposition(mouse, date, run, p.server));
+    end
     
     if p.pupil
         savevars = [savevars, 'pupil_dx', 'pupil_dy', 'pupil_sum', 'pupil'];
@@ -152,8 +181,7 @@ function write_simpcell(mouse, date, run, varargin)
     end
     
     
-     %% Brain motion
-    
+    %% Brain forces
     if p.brain_forces
         savevars = [savevars {'scaleml', 'scaleap', 'shearml', 'shearap', 'transml', 'transap'}];
         mot = pipe.proc.brain_forces(mouse, date, run, p.server);
@@ -167,36 +195,37 @@ function write_simpcell(mouse, date, run, varargin)
     
     
     %% Deconvolution
-    
     if p.deconvolved
         savevars{end+1} = 'deconvolved';
         deconvolved = pipe.pull.deconvolve(mouse, date, run, p.server);
     end
+
     
     %% Behavioral data
-    
-    ons = pipe.io.trial_times(mouse, date, run, p.server);
-    
-    if p.training && (isempty(ons) || ~isfield(ons, 'onsets'))
-        error('Behavioral data from Monkeylogic not found.');
-    end
-    
-    if ~isempty(ons) && isfield(ons, 'onsets')
-        savevars = [savevars {'onsets', 'offsets', 'licking', 'ensure', 'quinine', 'condition', 'trialerror', 'codes', 'orientations'}];
-        
-        onsets = ons.onsets;
-        offsets = ons.offsets;
-        licking = ons.licking;
-        ensure = ons.ensure;
-        quinine = ons.quinine;
-        condition = ons.condition;
-        trialerror = ons.trialerror;
-        codes = ons.codes;
-        orientations = ons.orientation;
-    elseif ~isempty(ons)
-        savevars = [savevars {'licking'}];
-        
-        licking = ons.licking;
+    if p.behavior
+        ons = pipe.io.trial_times(mouse, date, run, p.server);
+
+        if p.training && (isempty(ons) || ~isfield(ons, 'onsets'))
+            error('Behavioral data from Monkeylogic not found.');
+        end
+
+        if ~isempty(ons) && isfield(ons, 'onsets')
+            savevars = [savevars {'onsets', 'offsets', 'licking', 'ensure', 'quinine', 'condition', 'trialerror', 'codes', 'orientations'}];
+
+            onsets = ons.onsets;
+            offsets = ons.offsets;
+            licking = ons.licking;
+            ensure = ons.ensure;
+            quinine = ons.quinine;
+            condition = ons.condition;
+            trialerror = ons.trialerror;
+            codes = ons.codes;
+            orientations = ons.orientation;
+        elseif ~isempty(ons)
+            savevars = [savevars {'licking'}];
+
+            licking = ons.licking;
+        end
     end
     
     %% Photometry
@@ -228,7 +257,20 @@ function write_simpcell(mouse, date, run, varargin)
     
     %% Save
     
-    save(spath, savevars{:})
+    if ~p.append && ~isempty(savevars)
+        save(spath, savevars{:})
+    elseif ~isempty(savevars)
+        simp = pipe.load(mouse, date, run, 'simpcell', p.server);
+        final_savevars = {};
+        for k=1:length(savevars)
+            if p.force || ~isfield(simp, savevars{k})
+               final_savevars = [final_savevars savevars{k}];
+            end
+        end
+        if ~isempty(final_savevars)
+            save(spath, final_savevars{:}, '-append');
+        end
+    end
 end
 
 
