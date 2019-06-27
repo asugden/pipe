@@ -72,7 +72,10 @@ classdef RegWriter < handle
                 data = intmax('uint16') - permute(data, [1 3 2 4]);
                 data = reshape(data, [numel(data) 1]);
                 
-                fwrite(obj.fid, data, 'uint16');
+                count = fwrite(obj.fid, data, 'uint16');
+                if count == 0
+                    error('Unable to write to file.');
+                end
                 
                 return;
             end
