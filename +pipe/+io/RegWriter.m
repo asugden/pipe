@@ -74,7 +74,7 @@ classdef RegWriter < handle
                 
                 count = fwrite(obj.fid, data, 'uint16');
                 if count == 0
-                    error('Unable to write to file.');
+                    error('Unable to write to file. Perhaps the info variable needs to be cleared.');
                 end
                 
                 return;
