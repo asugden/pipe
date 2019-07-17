@@ -54,7 +54,7 @@ for i = 1:size(index_map, 2)
     if exist(id_path, 'file')
         if ~p.force
             disp('force=false, this file already exists:')
-            disp(['    ' idpath])
+            disp(['    ' id_path])
             return
         end
     end
