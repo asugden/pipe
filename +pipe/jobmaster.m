@@ -63,7 +63,14 @@ function jobmaster(varargin)
             % Run first remaining file
             % Open the job and move it to the active directory
             job = load(path);
-            [~, fname, ~] = fileparts(path);
+            [fdir, fname, ~] = fileparts(path);
+            
+            % Leave behind a note saying where the job is going
+            log_path = fullfile(fdir, [fname '.log']);
+            fid = fopen(log_path, 'w+');
+            fprintf(fid, 'Job running on %s', pipe.misc.hostname);
+            fclose(fid);
+                        
             movefile(path, fullfile(path_now, [fname '.mat']));        
         
             tic;
@@ -84,6 +91,7 @@ function jobmaster(varargin)
                         
                         % Write error info to file
                         fid = fopen(fullfile(path_error, [fname '.log']), 'w+');
+                        fprintf(fid, 'Job ran on %s\n', pipe.misc.hostname);
                         fprintf(fid, '%s', err.getReport('extended', 'hyperlinks', 'off'));
                         fclose(fid);
                     end
@@ -103,10 +111,12 @@ function jobmaster(varargin)
                         
                         % Write error info to file
                         fid = fopen(fullfile(path_error, [fname '.log']), 'w+');
+                        fprintf(fid, 'Job ran on %s\n', pipe.misc.hostname);
                         fprintf(fid, '%s', err.getReport('extended', 'hyperlinks', 'off'));
                         fclose(fid);
                     end
             end
+            delete(log_path);
             joblength = toc;
             fprintf('The job took %f minutes\n', joblength/60);
             close all;

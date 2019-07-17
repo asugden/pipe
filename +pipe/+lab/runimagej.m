@@ -37,6 +37,8 @@ function runimagej()
             ijroot = 'D:\Analysis_scripts\pipeline\minimal_ImageJ';
         elseif strcmpi(hn, 'sweetness')
             ijroot = 'D:\Analysis_scripts\Dropbox\AndermannLab\lab\pipeline\minimal_ImageJ';
+        elseif strcmpi(hn, 'camillo')
+            ijroot = [pipe.lab.pathbase() filesep 'jobdb\code\minimal_ImageJ'];
         else
             error('Must set ImageJ location on your server.');
         end

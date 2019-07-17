@@ -10,7 +10,7 @@ function write_simpcell(mouse, date, run, varargin)
     addOptional(p, 'raw', true);          % Include the raw data
     addOptional(p, 'f0', true);           % Include the running f0 baseline
     addOptional(p, 'deconvolved', true);  % Deconvolve and include deconvolved traces if true
-    addOptional(p, 'pupil', false);       % Add pupil data-- turned off until improvements are made
+    addOptional(p, 'pupil', true);        % Add pupil data
     addOptional(p, 'brain_forces', false);% Add the motion of the brain as forces
     addOptional(p, 'photometry', false);  % Add photometry data
     addOptional(p, 'photometry_fiber', 1);% Which photometry fiber(s) to include, can be array
@@ -147,8 +147,8 @@ function write_simpcell(mouse, date, run, varargin)
     brainmotion = single(pipe.proc.brainposition(mouse, date, run, p.server));
     
     if p.pupil
-        savevars = [savevars, 'pupil'];
-        [pupil_dx, pupil_dy, pupil_sum, pupil] = sbxPupil(mouse, date, run, p.server);
+        savevars = [savevars, 'pupil_dx', 'pupil_dy', 'pupil_sum', 'pupil'];
+        [pupil_dx, pupil_dy, pupil_sum, pupil] = pipe.pupil.extract(mouse, date, run, p.server);
     end
     
     

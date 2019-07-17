@@ -3,7 +3,7 @@ function out = dates(mouse, server)
 
     if nargin < 2, server = []; end
 
-    mousedir = fullfile(pipe.lab.pathbase(server), mouse);
+    mousedir = pipe.lab.mousedir(mouse, server);
     pattern = ['^\d{6}_' mouse '.*'];
     
     out = [];
@@ -12,9 +12,9 @@ function out = dates(mouse, server)
     for i=1:length(fs)
         if fs(i).isdir
             if regexp(fs(i).name, pattern)
-                date = str2num(fs(i).name(1:6));
+                date = str2double(fs(i).name(1:6));
                 if ~isempty(pipe.lab.runs(mouse, date, server))
-                    out(length(out)+1) = date;
+                    out(length(out)+1) = date; %#ok<AGROW>
                 end
             end
         end

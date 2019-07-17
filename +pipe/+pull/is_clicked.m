@@ -34,7 +34,7 @@ function proc = is_clicked(mouse, date, runs, server, varargin)
     icarun = runs(end);
     icapath = pipe.path(mouse, date, icarun, 'ica', server);
     
-    [seld, ~] = pipe.pull.clicked_from_server(mouse, date, icarun);
+    [seld, ~] = pipe.pull.clicked_from_server(mouse, date, icarun, icapath);
     if ~isempty(seld)
         proc = true;
     elseif ~p.not_legacy
