@@ -68,7 +68,11 @@ classdef xday < handle
             % optional inputs
             addOptional(p, 'force', false);
             addOptional(p, 'server', []);
-            addOptional(p, 'dates', pipe.lab.dates(mouse, []));
+            try
+                addOptional(p, 'dates', pipe.lab.dates(mouse, []));
+            catch
+                % prevent breaking with no dir in default location
+                addOptional(p, 'dates', []);
 
             % parse
             parse(p, varargin{:});
