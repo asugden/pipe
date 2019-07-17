@@ -73,6 +73,7 @@ classdef xday < handle
             catch
                 % prevent breaking with no dir in default location
                 addOptional(p, 'dates', []);
+            end
 
             % parse
             parse(p, varargin{:});
