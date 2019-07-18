@@ -36,7 +36,7 @@ end
 % create finalized date/run vectors and warpfields,
 % removing indices that were in obj.bad_days, but not 
 % bad_days_to_keep input
-drop_inds = find(~ismember(obj.bad_days, bad_days_to_keep));
+drop_inds = obj.bad_days(~ismember(obj.bad_days, bad_days_to_keep));
 count = 1;
 final_warpfields = {};
 final_dates = [];
