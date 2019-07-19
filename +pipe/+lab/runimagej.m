@@ -27,19 +27,22 @@ function runimagej()
         % Switch off warning
         warning_state = warning('off');
 
-        if strcmpi(hn, 'megatron')
-            ijroot = 'D:\twophoton_data\2photon\scan\pipeline\minimal_ImageJ';
-        elseif strcmpi(hn, 'santiago')
-            ijroot = 'D:\Analysis_scripts\pipeline\minimal_ImageJ';
-        elseif strcmpi(hn, 'atlas')
-            ijroot = 'E:\Analysis_scripts\pipeline\minimal_ImageJ';
-        elseif strcmpi(hn, 'beastmode')
-            ijroot = 'D:\Analysis_scripts\pipeline\minimal_ImageJ';
-        elseif strcmpi(hn, 'sweetness')
-            ijroot = 'D:\Analysis_scripts\Dropbox\AndermannLab\lab\pipeline\minimal_ImageJ';
-        elseif strcmpi(hn, 'camillo')
-            ijroot = [pipe.lab.pathbase() filesep 'jobdb\code\minimal_ImageJ'];
-        else
+        ijroot = [pipe.lab.pathbase() filesep 'jobdb\code\minimal_ImageJ'];
+        if ~exist(ijroot)
+            if strcmpi(hn, 'megatron')
+                ijroot = 'D:\twophoton_data\2photon\scan\pipeline\minimal_ImageJ';
+            elseif strcmpi(hn, 'santiago')
+                ijroot = 'D:\Analysis_scripts\pipeline\minimal_ImageJ';
+            elseif strcmpi(hn, 'atlas')
+                ijroot = 'E:\Analysis_scripts\pipeline\minimal_ImageJ';
+            elseif strcmpi(hn, 'beastmode')
+                ijroot = 'D:\Analysis_scripts\pipeline\minimal_ImageJ';
+            elseif strcmpi(hn, 'sweetness')
+                ijroot = 'D:\Analysis_scripts\Dropbox\AndermannLab\lab\pipeline\minimal_ImageJ';
+            end
+        end
+        
+        if isempty(ijroot) || ~exist(ijroot)
             error('Must set ImageJ location on your server.');
         end
             
