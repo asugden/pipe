@@ -16,7 +16,7 @@ function preprocess(mouse, date, varargin)
     addOptional(p, 'job', true);  % Set to true to run as a job, set to false to run immediately.
     addOptional(p, 'priority', 'med');  % Set the priority to be low, medium, or high. Default is medium.
     addOptional(p, 'server', []);  % Add in the server name as a string
-    % addOptional(p, 'pupil', false);  % Extract pupil diameter if possible
+    addOptional(p, 'pupil', true);  % Extract pupil diameter if possible
     addOptional(p, 'runs', []);  % Defaults to all runs in the directory
     addOptional(p, 'force', false);  % Overwrite files if they exist
     addOptional(p, 'pmt', 1, @isnumeric);  % Which PMT to use for analysis, 1-green, 2-red
@@ -168,11 +168,16 @@ function preprocess(mouse, date, varargin)
                 pars{end + 1} = getfield(p, fns{i});
             end
         end
+        
+        % pupil in preprocess is the premask click gui, so never do that as
+        % a job
+        pars{end + 1} = 'pupil';
+        pars{end + 1} = false;
 
         % And save
         job_path = pipe.lab.jobdb([], p.priority);
         job = 'preprocess';
-        time = timestamp();
+        time = pipe.misc.timestamp();
         user = getenv('username');
         extra = '';
         if ~isempty(mouse)
@@ -183,7 +188,7 @@ function preprocess(mouse, date, varargin)
         end
 
         save(sprintf('%s\\%s_%s_%s%s.mat', job_path, ...
-            timestamp(), user, job, extra), 'mouse', 'date', 'job', ...
+            pipe.misc.timestamp(), user, job, extra), 'mouse', 'date', 'job', ...
             'time', 'user', 'pars');
         return;
     end
@@ -199,7 +204,7 @@ function preprocess(mouse, date, varargin)
         'refsize', p.refsize, 'refoffset', p.refoffset, 'target_rounds', p.align_target_rounds, ...
         'tbin', p.align_tbin_s, 'binxy', p.align_downsample_xy, ...
         'highpass_sigma', p.align_highpass_sigma, 'pre_register', p.pre_register, ...
-        'interpolation_type', p.align_interpolation_type);
+        'interpolation_type', p.align_interpolation_type, 'chunksize', p.chunksize);
 
     %% Align from pcacleaned
     
@@ -258,13 +263,9 @@ function preprocess(mouse, date, varargin)
 
     %% Follow-up with optional images for checking
     
-%     if p.pupil
-%         if ~p.job
-%             sbxPupilMasks(mouse, date, runs, p.server);
-%         end
-%         
-%         sbxPupils(mouse, date, runs, p.server);
-%     end
+    if p.pupil && ~isempty(p.runs)
+        pipe.pupil.premasks(mouse, date, p.runs, p.server);
+    end
     
     if p.testimages
         for r = 1:length(sbxpaths)

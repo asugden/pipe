@@ -235,7 +235,7 @@ function [dx, dy, area, radii, quality] = position(eye, mask, cx, cy, varargin)
     baseline = fillmissing(baseline, 'spline');
     
     % Use the moving mean to find outliers
-    tarea = area - baseline;
+    tarea = area - baseline(1:length(area));
     stdev = std(tarea);
     outliers = abs(tarea) > p.outlier_sigma*stdev;
     outliers = conv(outliers, ones(5, 1), 'same');

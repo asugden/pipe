@@ -103,6 +103,7 @@ function masks(mouse, date, runs, server, force)
                 
                 sleep = figure;
                 imagesc(comb_images);
+                bw_mask = ones(size(comb_images, 1), size(comb_images, 2));
                 colormap('Gray');
                 title('Click on closed eyes. Enter to close.');
                 hold on;
@@ -117,14 +118,16 @@ function masks(mouse, date, runs, server, force)
                     c = ceil(x/sz(2));
                     r = ceil(y/sz(1));
                     imn = (r - 1)*cols + c;
-                    skip(imn) = 1 - skip(imn);
+                    if imn <= length(skip)
+                        skip(imn) = 1 - skip(imn);
                     
-                    bw_mask = ones(size(comb_images, 1), size(comb_images, 2));
-                    for r = 1:rows
-                        for c = 1:cols
-                            imn = (r-1)*cols + c;
-                            if imn <= size(eyes, 3) && skip(imn)
-                                bw_mask((r-1)*sz(1)+1:r*sz(1), (c-1)*sz(2)+1:c*sz(2)) = 0;
+                        bw_mask = ones(size(comb_images, 1), size(comb_images, 2));
+                        for r = 1:rows
+                            for c = 1:cols
+                                imn = (r-1)*cols + c;
+                                if imn <= size(eyes, 3) && skip(imn)
+                                    bw_mask((r-1)*sz(1)+1:r*sz(1), (c-1)*sz(2)+1:c*sz(2)) = 0;
+                                end
                             end
                         end
                     end
