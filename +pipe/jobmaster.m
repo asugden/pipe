@@ -115,6 +115,24 @@ function jobmaster(varargin)
                         fprintf(fid, '%s', err.getReport('extended', 'hyperlinks', 'off'));
                         fclose(fid);
                     end
+                case 'timeaverage'
+                    fprintf('\n\n\n\n-----\nTime averaging file %s at %s\n', fname, pipe.misc.timestamp());
+                    try 
+                        job.pars = add_server(job.pars, server);
+                        pipe.timeaverage(job.mouse, job.date, job.run, job.pars);
+                        path_complete = pipe.lab.jobdb(server, 'complete');
+                        movefile(fullfile(path_now, [fname '.mat']), fullfile(path_complete, [fname '.mat']));
+                    catch err
+                        path_error = pipe.lab.jobdb(server, 'error');
+                        movefile(fullfile(path_now, [fname '.mat']), fullfile(path_error, [fname '.mat']));
+                        disp(['Error on job ' fname]);
+                        
+                        % Write error info to file
+                        fid = fopen(fullfile(path_error, [fname '.log']), 'w+');
+                        fprintf(fid, 'Job ran on %s\n', pipe.misc.hostname);
+                        fprintf(fid, '%s', err.getReport('extended', 'hyperlinks', 'off'));
+                        fclose(fid);
+                    end
             end
             delete(log_path);
             joblength = toc;
