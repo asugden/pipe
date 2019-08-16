@@ -168,6 +168,11 @@ function preprocess(mouse, date, varargin)
                 pars{end + 1} = getfield(p, fns{i});
             end
         end
+        
+        % pupil in preprocess is the premask click gui, so never do that as
+        % a job
+        pars{end + 1} = 'pupil';
+        pars{end + 1} = false;
 
         % And save
         job_path = pipe.lab.jobdb([], p.priority);
@@ -199,7 +204,7 @@ function preprocess(mouse, date, varargin)
         'refsize', p.refsize, 'refoffset', p.refoffset, 'target_rounds', p.align_target_rounds, ...
         'tbin', p.align_tbin_s, 'binxy', p.align_downsample_xy, ...
         'highpass_sigma', p.align_highpass_sigma, 'pre_register', p.pre_register, ...
-        'interpolation_type', p.align_interpolation_type);
+        'interpolation_type', p.align_interpolation_type, 'chunksize', p.chunksize);
 
     %% Align from pcacleaned
     
