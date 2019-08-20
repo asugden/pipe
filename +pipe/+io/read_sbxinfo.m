@@ -49,6 +49,8 @@ function nginfo = read_sbxinfo(path, force)
             catch
             end
         end
+        % Clear this for now, will set correctly later if everything worked
+        pipe_info_loaded = [];
 
         % Load the .mat info file
         load(ipath);
@@ -59,9 +61,6 @@ function nginfo = read_sbxinfo(path, force)
             info.nchan = 1;
             info.channels = 2;
         end
-        
-        % Save the name of the loaded info file
-        pipe_info_loaded = base;
 
         % Fix mistakes from previous scanbox versions
         if(~isfield(info,'sz'))
@@ -128,6 +127,9 @@ function nginfo = read_sbxinfo(path, force)
         
         info.height = info.sz(2);
         info.width = info.recordsPerBuffer;
+
+        % Save the name of the loaded info file
+        pipe_info_loaded = base;
     end
     
     nginfo = info;
