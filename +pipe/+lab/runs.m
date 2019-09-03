@@ -10,7 +10,10 @@ function out = runs(mouse, date, server)
     
     out = [];
     searchdir = pipe.lab.datedir(mouse, date, server);
-    if isempty(searchdir), disp('ERROR: Directory not found'); return; end
+    if isempty(searchdir)
+        warning('Unable to locate date directory: %s/%s_%s', ...
+            mouse, date, mouse); return;
+    end
     matchstr = sprintf('%s_%s_', date, mouse);
     
     % Search for all directory titles that match a run
