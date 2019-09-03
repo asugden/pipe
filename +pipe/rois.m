@@ -62,6 +62,7 @@ function icaguidata = rois(movpaths, savepath, edges, varargin)
             info = pipe.metadata(path);
             nframes = info.max_idx + 1;
             nchunks = ceil(nframes/p.chunksize);
+            if ~isempty(p.optolevel), nchunks = ceil(nframes/p.chunksize/info.otlevels); end
             movpart = cell(1, nchunks);
             
             parfor c = 1:nchunks

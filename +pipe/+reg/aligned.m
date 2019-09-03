@@ -24,8 +24,9 @@ function data = aligned(path, regpath, k, N, pmt, optolevel)
     % Get the positions to return, accounting for optotune levels
     if ~isempty(optolevel) && info.optotune_used
         start_frame = (k - 1) * length(info.otwave) + optolevel;
-        end_frame = (k - 1 + N - 1) * length(info.otwave) + optolevel;
+        end_frame = (k - 1 + N - 1)*length(info.otwave) + optolevel;
         pos = start_frame:length(info.otwave):end_frame;
+        pos = pos(pos <= info.nframes);
     else
         pos = k:(k - 1) + size(data, 3);
     end
