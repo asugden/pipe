@@ -10,6 +10,9 @@ p.CaseSensitive = false;
 addOptional(p, 'n', 8); % sigma n, for first gaussian blurring kernel
 addOptional(p, 'm', 30); % sigma m, for second gaussian blurring kernel
 addOptional(p, 'edges', pipe.lab.badedges());
+addOptional(p, 'register', true);
+addOptional(p, 'mtype', 'sbx');
+addOptional(p, 'pmt', []);
 
 % parse
 parse(p, varargin{:});
@@ -30,8 +33,8 @@ for i = 1:length(obj.initial_dates)
     movm = zeros(sz(1), sz(2));
     for k = 1:length(obj.initial_runs{i})
         path = pipe.path(obj.mouse, obj.initial_dates(i), ...
-                  obj.initial_runs{i}(k), 'sbx', obj.pars.server);
-        mov = mean(pipe.imread(path, 1, 1000, 1, [], 'register', true), 3);
+                  obj.initial_runs{i}(k), p.mtype, obj.pars.server,'pmt',p.pmt);
+        mov = mean(pipe.imread(path, 1, 1000, 1, [], 'register', p.register), 3);
         movm = movm + mov;
     end
     movm = movm./length(obj.initial_runs{i});
