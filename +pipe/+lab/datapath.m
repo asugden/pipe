@@ -20,9 +20,9 @@ function path = datapath(mouse, date, run, ftype, server, varargin)
         path = {};
         for d = 1:length(date)
             if iscell(date)
-                path{end+1} = path.io.datapath(mouse, date{d}, run, ftype, server, p);
+                path{end+1} = pipe.lab.datapath(mouse, date{d}, run, ftype, server, p);
             else
-                path{end+1} = path.io.datapath(mouse, date(d), run, ftype, server, p);
+                path{end+1} = pipe.lab.datapath(mouse, date(d), run, ftype, server, p);
             end
         end
         return
@@ -31,7 +31,7 @@ function path = datapath(mouse, date, run, ftype, server, varargin)
     if ~isempty(run) && length(run) > 1
         path = {};
         for r = run
-            path{end+1} = path.io.datapath(mouse, date, r, ftype, server, p);
+            path{end+1} = pipe.lab.datapath(mouse, date, r, ftype, server, p);
         end
         return
     end
