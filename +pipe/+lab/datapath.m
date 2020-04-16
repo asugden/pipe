@@ -101,17 +101,17 @@ function path = datapath(mouse, date, run, ftype, server, varargin)
 %                     end
 %                 end
 %             end
-%         case 'demonsreg'
-%             ftype = 'sbxreg';
-%             fs = dir(searchdir);
-%             for i=1:length(fs)
-%                 [~, fname, ext] = fileparts(fs(i).name);
-%                 if strcmp(ext, sprintf('.%s', ftype))
-%                     if isempty(p.pmt) || ~isempty(strfind([fname ext], sprintf('_demonsreg-%i.sbxreg', p.pmt)))
-%                         path = sprintf('%s%s', searchdir, fs(i).name);
-%                     end
-%                 end
-%             end
+        case 'demonsreg'
+            ftype = 'sbxreg';
+            fs = dir(path);
+            for i=1:length(fs)
+                [~, fname, ext] = fileparts(fs(i).name);
+                if strcmp(ext, sprintf('.%s', ftype))
+                    if isempty(p.pmt) || ~isempty(strfind([fname ext], sprintf('_demonsreg-%i.sbxreg', p.pmt)))
+                        path = sprintf('%s%s', [pipe.lab.rundir(mouse, date, run, server) '\'], fs(i).name);
+                    end
+                end
+            end
 %         case 'xyregclean'
 %             ftype = 'sbxclean';
 %             fs = dir(searchdir);
