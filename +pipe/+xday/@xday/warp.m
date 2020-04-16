@@ -14,6 +14,11 @@ addOptional(p, 'register', true);
 addOptional(p, 'mtype', 'sbx');
 addOptional(p, 'pmt', []);
 
+% Unpack if needed
+if iscell(varargin) && size(varargin,1) * size(varargin,2) == 1
+    varargin = varargin{:};
+end
+
 % parse
 parse(p, varargin{:});
 p = p.Results;
