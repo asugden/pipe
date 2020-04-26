@@ -68,6 +68,8 @@ classdef xday < handle
             % optional inputs
             addOptional(p, 'force', false);
             addOptional(p, 'server', []);
+            addOptional(p, 'runs', {});
+            
             try
                 addOptional(p, 'dates', pipe.lab.dates(mouse, []));
             catch
@@ -105,13 +107,17 @@ classdef xday < handle
             end
 
             % get runs
-            runs = {};
-            for i = 1:length(obj.initial_dates)
-                date = obj.initial_dates(i);
-                runs{i} = pipe.lab.runs(mouse, date, p.server);
+            if isempty(p.runs)
+                runs = {};
+                for i = 1:length(obj.initial_dates)
+                    date = obj.initial_dates(i);
+                    runs{i} = pipe.lab.runs(mouse, date, p.server);
+                end
+                obj.initial_runs = runs;
+            else
+                obj.initial_runs = p.runs;
             end
-            obj.initial_runs = runs;
-
+            
             % save newly minted xday tracking object
             obj.mouse = mouse;
             obj.pars = p;

@@ -38,7 +38,7 @@ for i = 1:length(obj.initial_dates)
     movm = zeros(sz(1), sz(2));
     for k = 1:length(obj.initial_runs{i})
         path = pipe.path(obj.mouse, obj.initial_dates(i), ...
-                  obj.initial_runs{i}(k), p.mtype, obj.pars.server,'pmt',p.pmt);
+                  obj.initial_runs{i}(k), p.mtype{i}, obj.pars.server,'pmt',p.pmt);
         mov = mean(pipe.imread(path, 1, 1000, 1, [], 'register', p.register), 3);
         movm = movm + mov;
     end

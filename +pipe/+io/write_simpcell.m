@@ -13,6 +13,7 @@ function write_simpcell(mouse, date, run, varargin)
     addOptional(p, 'raw', true);          % Include the raw data
     addOptional(p, 'f0', true);           % Include the running f0 baseline
     addOptional(p, 'dff', true);          % Include the dff data
+    addOptional(p, 'subtracted', true);          % Include the dff data
     addOptional(p, 'deconvolved', true);  % Deconvolve and include deconvolved traces if true
     addOptional(p, 'pupil', true);        % Include pupil data
     addOptional(p, 'brainmotion', true);  % Include brain motion
@@ -67,7 +68,7 @@ function write_simpcell(mouse, date, run, varargin)
     end
     
     %% Load the signals file if needed
-    if p.raw || p.f0 || p.dff || p.photometry
+    if p.raw || p.f0 || p.dff || p.subtracted || p.photometry
         gd = pipe.load(mouse, date, run, 'signals', p.server, 'error', false);
         if isempty(gd)
             error(sprintf('Signals file not found for %s %s %03i', mouse, date, run));
@@ -79,7 +80,7 @@ function write_simpcell(mouse, date, run, varargin)
 
     
     %% Include imaging data
-    if p.raw || p.f0 || p.dff
+    if p.raw || p.f0 || p.dff || p.subtracted
         preprocess_pars = struct('unknown', true);
         postprocess_pars = struct('unknown', true);
 
@@ -95,6 +96,7 @@ function write_simpcell(mouse, date, run, varargin)
         if p.raw, savevars{end+1} = 'raw'; end
         if p.f0, savevars{end+1} = 'f0'; end
         if p.dff, savevars{end+1} = 'dff'; end
+        if p.subtracted, savevars{end+1} = 'subtracted'; end
 
         % Load info file and get framerate
         info = pipe.metadata(pipe.path(mouse, date, run, 'sbx', p.server));
@@ -105,6 +107,7 @@ function write_simpcell(mouse, date, run, varargin)
         dff = zeros(ncells, nframes, 'single');
         f0 = zeros(ncells, nframes, 'single');
         raw = zeros(ncells, nframes, 'single');
+        subtracted = zeros(ncells, nframes, 'single');
         centroid = zeros(ncells, 2, 'single');
 
         weighted_masks = zeros(info.height, info.width, 'single');
@@ -119,6 +122,7 @@ function write_simpcell(mouse, date, run, varargin)
             dff(i, :) = gd.cellsort(i).timecourse.dff_axon;
             f0(i, :) = gd.cellsort(i).timecourse.f0_axon;
             raw(i, :) = gd.cellsort(i).timecourse.raw;
+            subtracted(i, :) = gd.cellsort(i).timecourse.subtracted;
 
             if isfield(gd.cellsort(i), 'binmask')
                 mask = gd.cellsort(i).binmask;
