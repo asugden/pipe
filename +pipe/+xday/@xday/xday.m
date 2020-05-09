@@ -92,9 +92,11 @@ classdef xday < handle
                     'Select the scanbox day folder','out','cell');
                 
                 % turn cell output into dates vector
-                dates = [];
+                dates = zeros(1, length(folder_names));
                 for i = 1:length(folder_names)
-                    dates(i) = folder_names{i}(1:6);
+                    allsep = strfind(folder_names{i}, filesep);
+                    lastsep = allsep(end);
+                    dates(i) = str2double(folder_names{i}(lastsep+1:lastsep+6));
                 end
                 obj.initial_dates = sort(dates);
 
