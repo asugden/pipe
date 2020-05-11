@@ -9,7 +9,7 @@ p.CaseSensitive = false;
 % optional inputs
 addOptional(p, 'n', 8); % sigma n, for first gaussian blurring kernel
 addOptional(p, 'm', 30); % sigma m, for second gaussian blurring kernel
-addOptional(p, 'edges', pipe.lab.badedges());
+addOptional(p, 'edges', pipe.lab.badedges(obj.mouse));
 
 % parse
 parse(p, varargin{:});
