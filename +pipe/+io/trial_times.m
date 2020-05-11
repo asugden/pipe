@@ -19,9 +19,11 @@ function out = trial_times(mouse, date, run, server, force, allowrunthrough, int
     
     % Check if already created
     spath = pipe.path(mouse, date, run, 'onsets', server, 'estimate', true);
-    if ~force && exist(spath)
+    if ~force && exist(spath, 'file')
         out = load(spath, '-mat');
-        if isfield(out, 'onsets') && ~isfield(out, 'offsets')
+        if isfield(out, 'onsets') && ...
+                (~isfield(out, 'offsets') || ...
+                (~isempty(out.offsets) && out.onsets(1)==out.offsets(1)))
             force = true;
         else
             return

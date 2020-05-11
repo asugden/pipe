@@ -67,7 +67,7 @@ function write_simpcell(mouse, date, run, varargin)
     end
     
     %% Load the signals file if needed
-    if p.raw || p.f0 || p.dff || p.running || p.photometry
+    if p.raw || p.f0 || p.dff || p.photometry
         gd = pipe.load(mouse, date, run, 'signals', p.server, 'error', false);
         if isempty(gd)
             error(sprintf('Signals file not found for %s %s %03i', mouse, date, run));
@@ -159,7 +159,11 @@ function write_simpcell(mouse, date, run, varargin)
         quadfile = pipe.load(mouse, date, run, 'quad', p.server, 'error', false);
         if ~isempty(quadfile)
             running = quadfile.quad_data;
-            if length(running) == 2*nframes
+            % If we are also putting any imaging data in the simpcell,
+            % check to make sure these match.
+            % I think this check is for 2-plane data?
+            % Maybe just some old data?
+            if exist('nframes', 'var') && length(running) == 2*nframes
                 running = running(1:2:length(running)) + running(2:2:length(running));
             end
         else

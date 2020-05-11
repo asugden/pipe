@@ -114,6 +114,13 @@ function preprocess(mouse, date, varargin)
         p.has_mousedate = true;
     end
     
+    if ~isempty(p.optotune_level)
+        % Don't save an sbxreg because there might not be enough
+        % information
+        p.sbxreg = false;
+        p.testimages = false;
+    end
+    
     if isempty(sbxpaths), return; end
     
     %% Clean up the rest of the inputs

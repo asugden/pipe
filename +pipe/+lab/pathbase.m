@@ -49,6 +49,8 @@ function base = pathbase(server, jobdb_only)
             base = '\\beastmode\E\twophoton_extra\2photon_extra\scan_extra\';
         elseif strcmpi(server, 'camillo')
             base = '\\camillo\2p_data\scan\';
+        elseif strcmpi(server, 'behavior')
+            base = '\\anastasia\data\behavior';
         end
     end
 end

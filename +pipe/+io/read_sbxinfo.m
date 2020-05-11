@@ -49,6 +49,8 @@ function nginfo = read_sbxinfo(path, force)
             catch
             end
         end
+        % Clear this for now, will set correctly later if everything worked
+        pipe_info_loaded = [];
 
         % Load the .mat info file
         load(ipath);
@@ -59,9 +61,6 @@ function nginfo = read_sbxinfo(path, force)
             info.nchan = 1;
             info.channels = 2;
         end
-        
-        % Save the name of the loaded info file
-        pipe_info_loaded = base;
 
         % Fix mistakes from previous scanbox versions
         if(~isfield(info,'sz'))
@@ -78,14 +77,28 @@ function nginfo = read_sbxinfo(path, force)
         % use PMT gain
         switch info.channels
             case 1
-                info.nchan = 2;      % both PMT0 & 1
+                info.nchan = 2;      % both PMT 0 & 1
+                info.pmts = [1 2];
                 factor = 1;
             case 2
                 info.nchan = 1;      % PMT 0
+                info.pmts = 1;
                 factor = 2;
             case 3
                 info.nchan = 1;      % PMT 1
+                info.pmts = 2;
                 factor = 2;
+            case -1  % For version 3 scanbox info file
+                assert(nnz(info.chan.save) == info.chan.nchan);
+                info.nchan = info.chan.nchan;
+                info.pmts = find(info.chan.save);
+                if info.nchan == 2
+                    factor = 1;
+                elseif info.nchan == 1
+                    factor = 2;
+                else
+                    error('Incomplete: Unknown how sbx files are written for >2 channels.');
+                end
         end
 
         info.fid = fopen(path);
@@ -114,6 +127,9 @@ function nginfo = read_sbxinfo(path, force)
         
         info.height = info.sz(2);
         info.width = info.recordsPerBuffer;
+
+        % Save the name of the loaded info file
+        pipe_info_loaded = base;
     end
     
     nginfo = info;
