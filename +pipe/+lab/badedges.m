@@ -22,6 +22,8 @@ function out = badedges(path)
                 out = [64, 80, 38, 8];
             elseif ~isempty(strfind(fname, 'OA38')) && ~isempty(strfind(fname, '171107'))
                 out = [60, 80, 10, 55];
+            elseif ~isempty(strfind(fname, 'AS47'))
+                out = [10, 10, 5, 5];
             elseif ~isempty(strfind(fname, 'CB173'))
                 out = [50, 70, 5, 5];
             elseif ~isempty(strfind(fname, 'YL'))

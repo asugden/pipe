@@ -17,7 +17,19 @@ end
 masks_original = zeros(sz(1), sz(2), length(obj.final_dates));
 for i = 1:length(obj.final_dates)
     date = obj.final_dates(i);
-    run = obj.final_runs{i}(end);
+    % prioritize training runs for AUs data, otherwise default to last run
+    if ismember(2, obj.final_runs{i}) && ...
+       ~isempty(pipe.path(obj.mouse, date, 2, 'simpcell', obj.pars.server))
+         run = 2;
+    elseif ismember(3, obj.final_runs{i}) && ...
+       ~isempty(pipe.path(obj.mouse, date, 3, 'simpcell', obj.pars.server))
+         run = 3;
+    elseif ismember(4, obj.final_runs{i}) && ...
+       ~isempty(pipe.path(obj.mouse, date, 4, 'simpcell', obj.pars.server))
+         run = 4;
+    else
+        run = obj.final_runs{i}(end);
+    end
     simp = pipe.load(obj.mouse, date, run, 'simpcell', ...
                obj.pars.server);
     masks_original(:,:,i) = (simp.masks');
